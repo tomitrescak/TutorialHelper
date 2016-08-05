@@ -5,14 +5,16 @@ import HomePage from './home/containers/home_container';
 import Practical from './practicals/practical_container';
 import Exercise from './exercise/containers/exercise_container';
 import ExerciseAdmin from './exercise/containers/exercise_edit_container';
+import Marking from './marking/containers/marking_container';
 const AppRoutes = ({ history, injectDeps }) => {
     // const MainLayoutCtx = injectDeps(MainLayout);
     return (<Router history={history}>
       <Route path="/" component={MainLayout}>
         <IndexRoute component={HomePage}/>
         <Route path="practical/:name/:practicalId/:semesterId" component={Practical}/>
-        <Route path="exercise/:name/:exerciseId/:semesterId" component={Exercise}/>
+        <Route path="exercise/:name/:exerciseId/:practicalId/:semesterId" component={Exercise}/>
         <Route path="admin/exercise/:name/:exerciseId/:semesterId" component={ExerciseAdmin}/>
+        <Route path="marking/practical/:name/:practicalId/:semesterId" component={Marking}/>
       </Route>
     </Router>);
 };

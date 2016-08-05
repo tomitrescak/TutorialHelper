@@ -6,12 +6,14 @@
     "start": "meteor run"
   },
   "dependencies": {
-    "apollo-client": "^0.4.8",
+    "apollo-client": ">0.4.8",
     "apollo-mantra": "^1.0.8",
-    "apollo-server": "^0.1.5",
+    "apollo-server": ">0.1.5",
+    "body-parser": "^1.15.2",
     "express": "^4.14.0",
     "graphql": "^0.6.2",
     "graphql-tag": "^0.1.11",
+    "graphql-tools": "^0.6.2",
     "jss": "^3.11.1",
     "jss-nested": "^1.0.3",
     "jss-vendor-prefixer": "^2.0.0",
@@ -30,7 +32,7 @@
     "react-s-alert": "^1.1.4",
     "redux": "^3.5.2",
     "redux-thunk": "^2.1.0",
-    "semanticui-react": "../../packages/semanticui-react",
+    "semanticui-react": "^0.1.49",
     "sweetalert2": "^4.0.15"
   },
   "devDependencies": {

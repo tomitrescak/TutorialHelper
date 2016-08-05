@@ -33,9 +33,9 @@ const queryText = `
 
 const queries = {
   semester(root: any, { id }: any, { userId }: Apollo.IApolloContext): Cs.Collections.ISemesterDAO {
-    if (!userId) {
-      return null;
-    }
+    // if (!userId) {
+    //   return null;
+    // }
     return Semesters.findOne({_id: id});
   },
   semesters(root: any, props: any, { userId }: Apollo.IApolloContext): Cs.Collections.ISemesterDAO[] {

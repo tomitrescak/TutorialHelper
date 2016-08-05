@@ -1,20 +1,24 @@
 import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';
-import { ioSchema } from 'meteor/tomi:apollo-mantra';
+import { ioSchema } from 'apollo-mantra/server';
 
 declare global {
   namespace Cs.Entities {
     interface ISolution {
       _id?: string;
       userId: string;
+      user: string;
       semesterId: string;
+      practicalId: string;
       exerciseId: string;
       questionId: string;
       userQuestion?: string;
       expectedAnswer?: string;
       userAnswer?: string;
-      userAnswerValid?: boolean;
       mark?: number;
+      created?: Date;
+      modified?: Date;
+      submitted?: boolean;
     }
 
     interface IQuestionPossibilities {
@@ -105,20 +109,25 @@ const schema = `
   type Solution {
     _id: String
     userId: String
+    user: String
     semesterId: String
+    practicalId: String
     exerciseId: String
     questionId: String
     userQuestion: String
     expectedAnswer: String
     userAnswer: String
-    userAnswerValid: Boolean
     mark: Float
+    created: Date
+    modified: Date
+    finished: Boolean
   }
 `;
 
 const queryText = `
   exercise(id: String, userId: String): Exercise
-  solutions(semesterId: String, exerciseId: String): [Solution]
+  solutions(semesterId: String, practicalId: String, exerciseId: String): [Solution]
+  markingSolutions(semesterId: String, practicalId: String): [Solution]
 `;
 
 const queries = {
@@ -128,7 +137,13 @@ const queries = {
     }
     return Exercises.findOne({ _id: id });
   },
-  solutions(root: any, { semesterId, exerciseId }: any, { userId }: Apollo.IApolloContext): Cs.Collections.ISolutionDAO[] {
+  markingSolutions(root: any, { semesterId, practicalId }: any, { user }: Apollo.IApolloContext): Cs.Collections.ISolutionDAO[] {
+    if (!user || user.roles.indexOf('tutor') === -1) {
+      return null;
+    }
+    return Solutions.find({ semesterId, practicalId }).fetch();
+  },
+  solutions(root: any, { semesterId, practicalId, exerciseId }: any, { userId, user }: Apollo.IApolloContext): Cs.Collections.ISolutionDAO[] {
     if (!userId) {
       return null;
     }
@@ -139,6 +154,7 @@ const queries = {
     if (solutions.length === 0) {
       const exercise = Exercises.findOne({ _id: exerciseId });
       const questions = Questions.find({ _id: { $in: exercise.questions } }).fetch();
+      const created = new Date();
 
       for (let question of questions) {
 
@@ -154,13 +170,15 @@ const queries = {
 
         const solution: Cs.Collections.ISolutionDAO = {
           userId: userId,
+          user: user.profile.name,
           exerciseId: exerciseId,
           questionId: question._id,
-          semesterId: semesterId,
+          semesterId,
+          practicalId,
           userQuestion,
           expectedAnswer,
           userAnswer: '',
-          userAnswerValid: null
+          created
         };
 
         Solutions.insert(solution);
@@ -177,7 +195,7 @@ const queries = {
 };
 
 const mutationText = `
-  answers(solutionIds: [String], userAnswers: [String]): [Boolean]
+  answers(solutionIds: [String]!, userAnswers: [String]!, finished: Boolean): [Float]
   mark(solutionId: String, mark: Float, answerValid: Boolean): Boolean
   save(exercise: ExerciseInput): Boolean
 `;
@@ -185,12 +203,12 @@ const mutationText = `
 interface IActionAnswer {
   solutionIds: string[];
   userAnswers: string[];
+  finished: boolean;
 }
 
 interface IActionMark {
   solutionId: string;
   mark: number;
-  userAnswerValid: boolean;
 }
 
 interface IActionSave {
@@ -198,13 +216,13 @@ interface IActionSave {
 }
 
 const mutations = {
-  mark(root: any, { solutionId, mark, userAnswerValid}: IActionMark, { user, userId }: Apollo.IApolloContext) {
+  mark(root: any, { solutionId, mark }: IActionMark, { user, userId }: Apollo.IApolloContext) {
     // check for tutor
     if (!user.roles.find((r) => r === 'tutor')) {
       return;
     }
 
-    Solutions.update({ _id: solutionId }, { $set: { mark, userAnswerValid } });
+    Solutions.update({ _id: solutionId }, { $set: { mark } });
   },
   save(root: any, { exercise }: IActionSave, { user }: Apollo.IApolloContext) {
     if (!user.roles.find((r) => r === 'tutor')) {
@@ -214,60 +232,72 @@ const mutations = {
     console.log(JSON.stringify(exercise, null, 2));
 
     // first update the exercise 
-    Exercises.update({_id: exercise._id}, { $set: {
-      name: exercise.name,
-      instruction: exercise.instructions,
-      questions: exercise.questions.map((e) => e._id)
-    }});
+    Exercises.update({ _id: exercise._id }, {
+      $set: {
+        name: exercise.name,
+        instruction: exercise.instructions,
+        questions: exercise.questions.map((e) => e._id)
+      }
+    });
 
     // then update all questions
     for (let question of exercise.questions) {
-      Questions.upsert({_id: question._id}, { $set: question });
+      Questions.upsert({ _id: question._id }, { $set: question });
     }
   },
-  answers(root: any, { solutionIds, userAnswers}: IActionAnswer, { user, userId }: Apollo.IApolloContext): boolean[] {
+  answers(root: any, { solutionIds, userAnswers, finished }: IActionAnswer, { user, userId }: Apollo.IApolloContext): number[] {
     if (!solutionIds || !userAnswers || solutionIds.length !== userAnswers.length) {
       console.error('Unexpected input for "answers"');
       return;
     }
 
-    let answers: boolean[] = [];
+    try {
+      let answers: number[] = [];
+      const modified = new Date;
 
-    for (let i = 0; i < solutionIds.length; i++) {
-      const solutionId = solutionIds[i];
-      const userAnswer = userAnswers[i].replace(/ /g, '').toLowerCase();
+      for (let i = 0; i < solutionIds.length; i++) {
+        const solutionId = solutionIds[i];
+        const userAnswer = userAnswers[i].replace(/ /g, '').toLowerCase();
 
-      const solution = Solutions.findOne({_id: solutionId, userId });
-      if (!solution) {
-        throw new Error('Access violation!');
-      }
-      const exercise = Exercises.findOne(solution.exerciseId);
-      const question = Questions.findOne(solution.questionId);
-
-      // we either have to check according to custom question (from possibilities) or default question (from question)
-      let expectedAnswer: string = solution.expectedAnswer ? solution.expectedAnswer : question.expectedAnswer;
-      let userAnswerValid: boolean = null;
-
-      if (expectedAnswer) {
-        // remove spacen and put all to lowercas
-        expectedAnswer = expectedAnswer.replace(/ /g, '').toLowerCase();
-
-        // question can contain a validation script
-        // validation script returns function
-        if (question.validation) {
-          let validationText = `function (exercise, question, expectedAnswer, userAnswer) { ${question.validation} }`;
-          let validation = eval(validationText);
-          userAnswerValid = validation(exercise, question, expectedAnswer, userAnswer);
-        } else {
-          userAnswerValid = expectedAnswer === userAnswer;
+        const solution = Solutions.findOne({ _id: solutionId, userId });
+        if (!solution) {
+          throw new Error('Access violation!');
         }
+        const exercise = Exercises.findOne(solution.exerciseId);
+        const question = Questions.findOne(solution.questionId);
+
+        // we either have to check according to custom question (from possibilities) or default question (from question)
+        let expectedAnswer: string = solution.expectedAnswer ? solution.expectedAnswer : question.expectedAnswer;
+        let mark: number = null;
+
+        if (expectedAnswer) {
+          // remove spacen and put all to lowercas
+          expectedAnswer = expectedAnswer.replace(/ /g, '').toLowerCase();
+
+          // question can contain a validation script
+          // validation script returns function
+          if (question.validation) {
+            let validationText = `function (exercise, question, expectedAnswer, userAnswer) { ${question.validation} }`;
+            let validation = eval(validationText);
+            if (validation(exercise, question, expectedAnswer, userAnswer)) {
+              mark = question.points;
+            }
+          } else {
+            if (expectedAnswer && userAnswer) {
+              mark = expectedAnswer === userAnswer ? question.points : 0;
+            }
+          }
+        }
+
+        answers[i] = mark;
+
+        Solutions.update({ _id: solution._id }, { $set: { userAnswer, mark, finished, modified } });
       }
-
-      answers[i] = userAnswerValid;
-
-      Solutions.update({ _id: solution._id }, { $set: { userAnswer, userAnswerValid } });
+      return answers;
+    } catch (ex) {
+      console.log(ex.message);
+      console.log(ex.stack);
     }
-    return answers;
   }
 };
 

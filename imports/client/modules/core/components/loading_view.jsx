@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import { Text } from 'semanticui-react';
 import jss from 'jss';
 export class EmptyLoading extends React.Component {
@@ -20,8 +20,8 @@ export const CenteredLoading = ({ text }) => (<div id="editorLoader" className={
       <div className="ui active small inline loader"></div>&nbsp; &nbsp; &nbsp; <Text text={text ? text : 'loading'}/>
     </div>
   </div>);
-const Loading = ({ error }) => (<span>
-    <div className="ui active small inline loader"></div>&nbsp; &nbsp; &nbsp; <Text text="Loading ..."/>
+const Loading = ({ error, what }) => (<span>
+    <div className="ui active small inline loader"></div>&nbsp; &nbsp; &nbsp; <Text text={what ? what : 'Loading ...'}/>
     {error && console.error(error)}
   </span>);
 export default Loading;

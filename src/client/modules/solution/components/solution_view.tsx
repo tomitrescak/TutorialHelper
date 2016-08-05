@@ -42,17 +42,17 @@ const SolutionView = ({ context, question, solution}: IComponent) => {
             <Input defaultValue={solution.userAnswer} placeholder={questionText} onChange={bind('userAnswer')} />
           </Otherwise>
         </Choose>
-        <If condition={solution.mark >= 0}>
+        <If condition={solution.mark != null}>
           <Label color="blue" text={'Mark: ' + solution.mark} />
         </If>
         <Choose>
-          <When condition={solution.mark >= 0 && solution.userAnswerValid == null}>
+          <When condition={solution.mark != null && solution.mark > 0 && solution.mark < question.points}>
             <Label color="orange" text={'Satisfying Answer'} />
           </When>
-          <When condition={solution.userAnswerValid === true}>
+          <When condition={solution.mark != null && solution.mark === question.points}>
             <Label color="green" text="Correct" />
           </When>
-          <When condition={solution.userAnswerValid === false}>
+          <When condition={solution.mark != null && solution.mark === 0}>
             <Label color="red" text="Incorrect" />
           </When>
         </Choose>

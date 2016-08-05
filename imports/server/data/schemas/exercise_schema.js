@@ -1,6 +1,6 @@
 import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';
-import { ioSchema } from 'meteor/tomi:apollo-mantra';
+import { ioSchema } from 'apollo-mantra/server';
 export const Exercises = new Mongo.Collection('exercises');
 export const Questions = new Mongo.Collection('questions');
 export const Possibilities = new Mongo.Collection('possibilities');
@@ -32,19 +32,24 @@ const schema = `
   type Solution {
     _id: String
     userId: String
+    user: String
     semesterId: String
+    practicalId: String
     exerciseId: String
     questionId: String
     userQuestion: String
     expectedAnswer: String
     userAnswer: String
-    userAnswerValid: Boolean
     mark: Float
+    created: Date
+    modified: Date
+    finished: Boolean
   }
 `;
 const queryText = `
   exercise(id: String, userId: String): Exercise
-  solutions(semesterId: String, exerciseId: String): [Solution]
+  solutions(semesterId: String, practicalId: String, exerciseId: String): [Solution]
+  markingSolutions(semesterId: String, practicalId: String): [Solution]
 `;
 const queries = {
     exercise(root, { id }, { user }) {
@@ -53,7 +58,13 @@ const queries = {
         }
         return Exercises.findOne({ _id: id });
     },
-    solutions(root, { semesterId, exerciseId }, { userId }) {
+    markingSolutions(root, { semesterId, practicalId }, { user }) {
+        if (!user || user.roles.indexOf('tutor') === -1) {
+            return null;
+        }
+        return Solutions.find({ semesterId, practicalId }).fetch();
+    },
+    solutions(root, { semesterId, practicalId, exerciseId }, { userId, user }) {
         if (!userId) {
             return null;
         }
@@ -63,6 +74,7 @@ const queries = {
         if (solutions.length === 0) {
             const exercise = Exercises.findOne({ _id: exerciseId });
             const questions = Questions.find({ _id: { $in: exercise.questions } }).fetch();
+            const created = new Date();
             for (let question of questions) {
                 // randomly choose an option
                 let userQuestion = null;
@@ -75,13 +87,15 @@ const queries = {
                 }
                 const solution = {
                     userId: userId,
+                    user: user.profile.name,
                     exerciseId: exerciseId,
                     questionId: question._id,
-                    semesterId: semesterId,
+                    semesterId,
+                    practicalId,
                     userQuestion,
                     expectedAnswer,
                     userAnswer: '',
-                    userAnswerValid: null
+                    created
                 };
                 Solutions.insert(solution);
             }
@@ -93,17 +107,17 @@ const queries = {
     }
 };
 const mutationText = `
-  answers(solutionIds: [String], userAnswers: [String]): [Boolean]
+  answers(solutionIds: [String]!, userAnswers: [String]!, finished: Boolean): [Float]
   mark(solutionId: String, mark: Float, answerValid: Boolean): Boolean
   save(exercise: ExerciseInput): Boolean
 `;
 const mutations = {
-    mark(root, { solutionId, mark, userAnswerValid }, { user, userId }) {
+    mark(root, { solutionId, mark }, { user, userId }) {
         // check for tutor
         if (!user.roles.find((r) => r === 'tutor')) {
             return;
         }
-        Solutions.update({ _id: solutionId }, { $set: { mark, userAnswerValid } });
+        Solutions.update({ _id: solutionId }, { $set: { mark } });
     },
     save(root, { exercise }, { user }) {
         if (!user.roles.find((r) => r === 'tutor')) {
@@ -111,52 +125,65 @@ const mutations = {
         }
         console.log(JSON.stringify(exercise, null, 2));
         // first update the exercise 
-        Exercises.update({ _id: exercise._id }, { $set: {
+        Exercises.update({ _id: exercise._id }, {
+            $set: {
                 name: exercise.name,
                 instruction: exercise.instructions,
                 questions: exercise.questions.map((e) => e._id)
-            } });
+            }
+        });
         // then update all questions
         for (let question of exercise.questions) {
             Questions.upsert({ _id: question._id }, { $set: question });
         }
     },
-    answers(root, { solutionIds, userAnswers }, { user, userId }) {
+    answers(root, { solutionIds, userAnswers, finished }, { user, userId }) {
         if (!solutionIds || !userAnswers || solutionIds.length !== userAnswers.length) {
             console.error('Unexpected input for "answers"');
             return;
         }
-        let answers = [];
-        for (let i = 0; i < solutionIds.length; i++) {
-            const solutionId = solutionIds[i];
-            const userAnswer = userAnswers[i].replace(/ /g, '').toLowerCase();
-            const solution = Solutions.findOne({ _id: solutionId, userId });
-            if (!solution) {
-                throw new Error('Access violation!');
-            }
-            const exercise = Exercises.findOne(solution.exerciseId);
-            const question = Questions.findOne(solution.questionId);
-            // we either have to check according to custom question (from possibilities) or default question (from question)
-            let expectedAnswer = solution.expectedAnswer ? solution.expectedAnswer : question.expectedAnswer;
-            let userAnswerValid = null;
-            if (expectedAnswer) {
-                // remove spacen and put all to lowercas
-                expectedAnswer = expectedAnswer.replace(/ /g, '').toLowerCase();
-                // question can contain a validation script
-                // validation script returns function
-                if (question.validation) {
-                    let validationText = `function (exercise, question, expectedAnswer, userAnswer) { ${question.validation} }`;
-                    let validation = eval(validationText);
-                    userAnswerValid = validation(exercise, question, expectedAnswer, userAnswer);
+        try {
+            let answers = [];
+            const modified = new Date;
+            for (let i = 0; i < solutionIds.length; i++) {
+                const solutionId = solutionIds[i];
+                const userAnswer = userAnswers[i].replace(/ /g, '').toLowerCase();
+                const solution = Solutions.findOne({ _id: solutionId, userId });
+                if (!solution) {
+                    throw new Error('Access violation!');
                 }
-                else {
-                    userAnswerValid = expectedAnswer === userAnswer;
+                const exercise = Exercises.findOne(solution.exerciseId);
+                const question = Questions.findOne(solution.questionId);
+                // we either have to check according to custom question (from possibilities) or default question (from question)
+                let expectedAnswer = solution.expectedAnswer ? solution.expectedAnswer : question.expectedAnswer;
+                let mark = null;
+                if (expectedAnswer) {
+                    // remove spacen and put all to lowercas
+                    expectedAnswer = expectedAnswer.replace(/ /g, '').toLowerCase();
+                    // question can contain a validation script
+                    // validation script returns function
+                    if (question.validation) {
+                        let validationText = `function (exercise, question, expectedAnswer, userAnswer) { ${question.validation} }`;
+                        let validation = eval(validationText);
+                        if (validation(exercise, question, expectedAnswer, userAnswer)) {
+                            mark = question.points;
+                        }
+                    }
+                    else {
+                        if (expectedAnswer && userAnswer) {
+                            mark = expectedAnswer === userAnswer ? question.points : 0;
+                        }
+                    }
                 }
+                answers[i] = mark;
+                Solutions.update({ _id: solution._id }, { $set: { userAnswer, mark, finished, modified } });
             }
-            answers[i] = userAnswerValid;
-            Solutions.update({ _id: solution._id }, { $set: { userAnswer, userAnswerValid } });
+            return answers;
         }
-        return answers;
+        catch (ex) {
+            console.log(ex.message);
+            console.log(ex.stack);
+        }
     }
 };
 const resolvers = {

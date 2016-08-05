@@ -14,9 +14,9 @@ const queryText = `
 `;
 const queries = {
     semester(root, { id }, { userId }) {
-        if (!userId) {
-            return null;
-        }
+        // if (!userId) {
+        //   return null;
+        // }
         return Semesters.findOne({ _id: id });
     },
     semesters(root, props, { userId }) {

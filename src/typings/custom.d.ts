@@ -435,6 +435,14 @@ declare module 'meteor/tomi:apollo-mantra' {
   export function modificationSchema(): string;
 }
 
+declare module 'apollo-mantra/server' {
+  export function processSchema(definition: IApolloDefinition[]): void;
+  export function schemas(): any;
+  export function resolvers(): any;
+  export function ioSchema(type: string): void;
+  export function modificationSchema(): string;
+}
+
 declare module 'apollo-mantra' {
   interface IConnectFunctions {
     initContainer?: Function;

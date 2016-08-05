@@ -3,7 +3,7 @@ import Helmet from 'react-helmet';
 
 import { Meteor } from 'meteor/meteor';
 import { Accounts } from 'meteor/accounts-base';
-import { Grid, Column, Segment, Image } from 'semanticui-react';
+import { Grid, Column, Segment, Image, Jumbo } from 'semanticui-react';
 
 import jss from 'jss';
 
@@ -57,10 +57,10 @@ const Home = ({ user, data, context }: IProps) => (
       <Else />
       <Grid stackable columns={2}>
         <Column width={6} classes="computer only tablet only">
-          Something
+          <img src="hacker.png" />
         </Column>
         <Column width={10}>
-          <div id="login" className="ui login">
+          <div className="login">
             <AccountsView />
           </div>
         </Column>

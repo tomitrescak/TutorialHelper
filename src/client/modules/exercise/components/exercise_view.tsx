@@ -8,12 +8,14 @@ export interface IContainerProps {
   params: {
     name: string,
     exerciseId: string,
-    semesterId: string
+    semesterId: string,
+    practicalId: string
   }
 }
 export interface IComponentProps {
   context: Cs.IContext;
   userId: string;
+  user: Cs.Accounts.SystemUser;
   data?: {
     exercise: Cs.Collections.IExerciseDAO;
     solutions: Cs.Collections.ISolutionDAO[];
@@ -26,7 +28,9 @@ export interface IComponentMutations {
   answers: (solutionIds: string[], userAnswers: string[]) => any;
 }
 
-interface IComponentActions { }
+interface IComponentActions { 
+  answer(answers: Function, ids: String[], userAnswers: String[], data: any, submit: boolean): any;
+}
 interface IComponent extends IContainerProps, IComponentProps, IComponentActions, Apollo.IComponentMutations<IComponentMutations> { }
 
 let index: number = 0;
@@ -45,14 +49,19 @@ function readSolutionIds(solutions: Cs.Entities.ISolution[]): string[] {
   return solutions.map(s => s._id);
 }
 
-const ExerciseView = ({ context, params, userId, data, data: { exercise, solutions }, mutations: { answers }}: IComponent) => (
+const ExerciseView = ({ context, user, params, userId, data, data: { exercise, solutions }, answer, mutations: { answers }}: IComponent) => (
   <div>
     <Choose>
       <When condition={!exercise}>
         <Loading />
       </When>
       <Otherwise>
+
         <Segment>
+          <If condition={user.isRole('tutor')}>
+            <Button floated="right" color="orange" text="Modify" icon="edit" labeled="left" url={`/admin/exercise/${context.Utils.Router.encodeUrlName(exercise.name)}/${params.exerciseId}/${params.semesterId}`} />
+          </If>
+          <Button floated="right" color="default" text="Back to Practical" icon="arrow left" labeled="left" url={`/practical/1/${params.practicalId}/${params.semesterId}`} />
           <Header2 dividing text={`${exercise.name}`} icon="edit" />
           <MarkdownView text={exercise.instructions} />
 
@@ -61,20 +70,18 @@ const ExerciseView = ({ context, params, userId, data, data: { exercise, solutio
           </For>
         </Segment>
 
+        <Button color="green" text="Submit to Tutor" floated="right"
+          onClick={() => {
+            const ids = readSolutionIds(solutions);
+            const userAnswers = readSolutions(context.Store, ids);
+            answer(answers, ids, userAnswers, data, true);
+          } } />
+
         <Button color="primary" text="Submit" floated="right"
           onClick={() => {
             const ids = readSolutionIds(solutions);
             const userAnswers = readSolutions(context.Store, ids);
-
-            answers(ids, userAnswers).then((result: any) => {
-              if (result.errors) {
-                alert(JSON.stringify(result.errors));
-              }
-              // if we have the data we want
-              if (result.data) {
-                data.refetch({ exerciseId: params.exerciseId, userId, semesterId: params.semesterId, });
-              };
-            });
+            answer(answers, ids, userAnswers, data, false);
           } } />
       </Otherwise>
     </Choose>

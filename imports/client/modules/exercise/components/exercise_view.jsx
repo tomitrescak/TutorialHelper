@@ -16,13 +16,18 @@ function readSolutions(store, ids) {
 function readSolutionIds(solutions) {
     return solutions.map(s => s._id);
 }
-const ExerciseView = ({ context, params, userId, data, data: { exercise, solutions }, mutations: { answers } }) => (<div>
+const ExerciseView = ({ context, user, params, userId, data, data: { exercise, solutions }, answer, mutations: { answers } }) => (<div>
     <Choose>
       <When condition={!exercise}>
         <Loading />
       </When>
       <Otherwise>
+
         <Segment>
+          <If condition={user.isRole('tutor')}>
+            <Button floated="right" color="orange" text="Modify" icon="edit" labeled="left" url={`/admin/exercise/${context.Utils.Router.encodeUrlName(exercise.name)}/${params.exerciseId}/${params.semesterId}`}/>
+          </If>
+          <Button floated="right" color="default" text="Back to Practical" icon="arrow left" labeled="left" url={`/practical/1/${params.practicalId}/${params.semesterId}`}/>
           <Header2 dividing text={`${exercise.name}`} icon="edit"/>
           <MarkdownView text={exercise.instructions}/>
 
@@ -31,19 +36,16 @@ const ExerciseView = ({ context, params, userId, data, data: { exercise, solutio
           </For>
         </Segment>
 
+        <Button color="green" text="Submit to Tutor" floated="right" onClick={() => {
+    const ids = readSolutionIds(solutions);
+    const userAnswers = readSolutions(context.Store, ids);
+    answer(answers, ids, userAnswers, data, true);
+}}/>
+
         <Button color="primary" text="Submit" floated="right" onClick={() => {
     const ids = readSolutionIds(solutions);
     const userAnswers = readSolutions(context.Store, ids);
-    answers(ids, userAnswers).then((result) => {
-        if (result.errors) {
-            alert(JSON.stringify(result.errors));
-        }
-        // if we have the data we want
-        if (result.data) {
-            data.refetch({ exerciseId: params.exerciseId, userId, semesterId: params.semesterId, });
-        }
-        ;
-    });
+    answer(answers, ids, userAnswers, data, false);
 }}/>
       </Otherwise>
     </Choose>

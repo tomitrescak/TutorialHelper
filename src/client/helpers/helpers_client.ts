@@ -42,7 +42,7 @@ declare global {
 let saveFunction: ISaveable;
 let saveCallback: Function;
 
-const saveListener = function(e: KeyboardEvent) {
+const saveListener = function (e: KeyboardEvent) {
   if (e.keyCode === 83 && (navigator.platform.match('Mac') ? e.metaKey : e.ctrlKey)) {
     e.preventDefault();
     saveFunction(); // UiUtils.announceSaved()
@@ -56,7 +56,7 @@ export const UiUtils = {
   datePicker(elem: Element, context: any, field: string) {
     $(elem).pickadate({
       format: 'dd mmm yyyy',
-      onSet: function(value: any) {
+      onSet: function (value: any) {
         context[field] = new Date(value.select);
       }
     });
@@ -113,7 +113,7 @@ export const UiUtils = {
     return html;
   },
   hResize(lDiv: JQuery, rDiv: JQuery, marker: JQuery, evt: IEventObject) {
-    return function(e: MouseEvent) {
+    return function (e: MouseEvent) {
       let minLeft = lDiv.position().left + 50;
       let maxRight = rDiv.position().left + rDiv.width() - 50;
       if (e.clientX > minLeft && e.clientX < maxRight) {
@@ -127,7 +127,7 @@ export const UiUtils = {
     };
   },
   relativeResize(lDiv: JQuery, rDiv: JQuery, marker: JQuery, evt: IEventObject) {
-    return function(e: MouseEvent) {
+    return function (e: MouseEvent) {
 
       let left = lDiv.offset().left;
       let relativeWindow = window.innerWidth - left;
@@ -149,7 +149,7 @@ export const UiUtils = {
     const hresize = UiUtils.relativeResize($(left), $(right), $(resizer), evt);
 
     window.addEventListener('mousemove', hresize, true);
-    window.addEventListener('mouseup', function() {
+    window.addEventListener('mouseup', function () {
       window.removeEventListener('mousemove', hresize, true);
     }, true);
     return false;
@@ -217,7 +217,7 @@ export const UiUtils = {
     $('#previewModalContent').html(content);
     $('#previewModal').modal('show');
 
-    setTimeout(function() {
+    setTimeout(function () {
       $('#previewModal').modal('refresh');
     }, 1000);
   },
@@ -245,8 +245,8 @@ export const UiUtils = {
       input: 'text',
       inputPlaceholder: placeholder[0] === '!' ? mf(placeholder.substring(1)) : placeholder,
       showCancelButton: true,
-      inputValidator: function(value: string) {
-        return new Promise(function(resolve, reject) {
+      inputValidator: function (value: string) {
+        return new Promise(function (resolve, reject) {
           if (validate(value)) {
             resolve();
           } else {
@@ -254,7 +254,7 @@ export const UiUtils = {
           }
         });
       }
-    }).then(function(result: string) {
+    }).then(function (result: string) {
       callback(result);
     });
 
@@ -280,8 +280,8 @@ export const UiUtils = {
       //     }
       //   });
       // },
-      inputValidator: function(value: string) {
-        return new Promise(function(resolve, reject) {
+      inputValidator: function (value: string) {
+        return new Promise(function (resolve, reject) {
           if (validate(value)) {
             resolve();
           } else {
@@ -289,7 +289,7 @@ export const UiUtils = {
           }
         });
       }
-    }).then(function(result: string) {
+    }).then(function (result: string) {
       callback(result);
     });
   },
@@ -308,7 +308,40 @@ export const UiUtils = {
 // SYSTEM UTILS                        //
 /////////////////////////////////////////
 
+declare global {
+  namespace Cs.Entities {
+    interface Group<T> {
+      key: string;
+      values: T[];
+    }
+  }
+}
+
 export const ClassUtils = {
+  groupByArray<T>(xs: Array<T>, key: string | Function): Cs.Entities.Group<T>[] {
+    return xs.reduce(function (rv, x) {
+      let v = key instanceof Function ? key(x) : x[key];
+      let el = rv.find((r: any) => r && r.key === v);
+      if (el) {
+        el.values.push(x);
+      } else {
+        rv.push({
+          key: v,
+          values: [x]
+        });
+      }
+      return rv;
+    }, []
+    );
+  },
+  groupByObject(xs: Array<any>, key: string | Function) {
+    return xs.reduce(function (rv, x) {
+      let v = key instanceof Function ? key(x) : x[key];
+      (rv[v] = rv[v] || []).push(x);
+      return rv;
+    }, {}
+    );
+  },
   indexArray(arr: any[]): any[] {
     if (arr.length === 0) {
       return arr;

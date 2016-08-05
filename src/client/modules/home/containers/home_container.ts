@@ -3,7 +3,6 @@ import AuthContainer from '../../core/containers/auth_container';
 import { connect, loadingContainer } from 'apollo-mantra';
 
 const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGraphQlProps<{}>): Apollo.IGraphqlQuery => {
-  console.log('Home container ...');
   return {
   data: {
     query: gql`

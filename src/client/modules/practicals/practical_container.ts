@@ -1,4 +1,4 @@
-import PracticalView, { IContainerProps } from './practical_view';
+import PracticalView, { IContainerProps, IComponentProps } from './practical_view';
 import { connect, loadingContainer } from 'apollo-mantra';
 
 const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGraphQlProps<IContainerProps>): Apollo.IGraphqlQuery => ({
@@ -23,7 +23,7 @@ const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGr
   }
 });
 
-const mapStateToProps = (context: Cs.IContext, state: Cs.IState) => ({
+const mapStateToProps = (context: Cs.IContext, state: Cs.IState): IComponentProps => ({
   context,
   user: state.accounts.user
 });

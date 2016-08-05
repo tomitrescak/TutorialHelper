@@ -3,6 +3,7 @@ import Alert from 'react-s-alert';
 import Helmet from 'react-helmet';
 import HeaderView from '../../core/components/header_view';
 import AuthContainer from '../../core/containers/auth_container';
+import Loading from '../../core/components/loading_view';
 import { Grid, Column } from 'semanticui-react';
 import jss from 'jss';
 const Header = AuthContainer(HeaderView);
@@ -26,7 +27,7 @@ export class Layout extends React.Component {
               <Column>
                 <Header />
                 <If condition={this.props.loggingIn}>
-                  ....
+                  <Loading what="Logging in ..."/>
                 <Else />
                   <div id="main">
                     {this.props.children}

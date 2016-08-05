@@ -257,10 +257,30 @@ export const UiUtils = {
         return text ? text.replace(/img src='/g, 'img src=\'' + process.env.awsBucket) : '';
     }
 };
-/////////////////////////////////////////
-// SYSTEM UTILS                        //
-/////////////////////////////////////////
 export const ClassUtils = {
+    groupByArray(xs, key) {
+        return xs.reduce(function (rv, x) {
+            let v = key instanceof Function ? key(x) : x[key];
+            let el = rv.find((r) => r && r.key === v);
+            if (el) {
+                el.values.push(x);
+            }
+            else {
+                rv.push({
+                    key: v,
+                    values: [x]
+                });
+            }
+            return rv;
+        }, []);
+    },
+    groupByObject(xs, key) {
+        return xs.reduce(function (rv, x) {
+            let v = key instanceof Function ? key(x) : x[key];
+            (rv[v] = rv[v] || []).push(x);
+            return rv;
+        }, {});
+    },
     indexArray(arr) {
         if (arr.length === 0) {
             return arr;

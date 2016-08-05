@@ -2,6 +2,11 @@ import { Mongo } from 'meteor/mongo';
 import { Exercises } from './exercise_schema';
 
 declare global {
+  namespace Cs.Entities {
+    interface IPractical extends Cs.Collections.IPracticalEntity {
+      exercises: IExercise[];
+    }
+  }
   namespace Cs.Collections {
     interface IPracticalEntity {
       _id?: string;
@@ -9,13 +14,11 @@ declare global {
       description: string;
     }
     interface IPracticalDAO extends IPracticalEntity {
-      
+
       exercises: string[];
     }
 
-    interface IPractical extends IPracticalEntity {
-      exercises: IExerciseDAO[];
-    }
+
   }
 }
 
@@ -39,14 +42,14 @@ const queries = {
     if (!userId) {
       return;
     }
-    return Practicals.findOne({_id: id});
+    return Practicals.findOne({ _id: id });
   }
 }
 
 const resolvers = {
   Practical: {
     exercises(practical: Cs.Collections.IPracticalDAO) {
-      return Exercises.find({_id: { $in: practical.exercises}}).fetch();
+      return Exercises.find({ _id: { $in: practical.exercises } }).fetch();
     }
   }
 }

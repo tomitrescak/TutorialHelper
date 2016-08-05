@@ -1,7 +1,6 @@
 import HomeView from '../components/home_view';
 import { connect, loadingContainer } from 'apollo-mantra';
 const mapQueriesToProps = (context, { state, ownProps }) => {
-    console.log('Home container ...');
     return {
         data: {
             query: gql `

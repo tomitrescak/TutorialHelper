@@ -410,6 +410,8 @@ declare module "semanticui-react" {
   // accordion
 
   interface IAcordion {
+    styled?: boolean;
+    classes?: string;
     exclusive?: boolean;
     children?: any;
     id: string;

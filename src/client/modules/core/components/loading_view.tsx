@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import { Text } from 'semanticui-react';
 import jss from 'jss';
 
@@ -36,9 +36,14 @@ export const CenteredLoading = ({ text }: ICenteredProps) => (
   </div>
 );
 
-const Loading = ({error}: any) => (
+interface ILoadingProps {
+  what?: string;
+  error?: Error;
+}
+
+const Loading = ({error, what }: any) => (
   <span>
-    <div className="ui active small inline loader"></div>&nbsp; &nbsp; &nbsp; <Text text="Loading ..." />
+    <div className="ui active small inline loader"></div>&nbsp; &nbsp; &nbsp; <Text text={what ? what : 'Loading ...'} />
     { error && console.error(error) }
   </span>
 );

@@ -1,5 +1,5 @@
 import { createApolloServer } from 'meteor/apollo';
-import { schemas, resolvers } from 'meteor/tomi:apollo-mantra';
+import { schemas, resolvers } from 'apollo-mantra/server';
 import createSchemas from '../data/schemas/index';
 
 declare global {
@@ -13,8 +13,6 @@ declare global {
 
 export default function() {
   createSchemas();
-
-  console.log()
 
   // const schema = `{\n${schemas().join('').replace(/\\n/g, '\n')}\n}`;
 

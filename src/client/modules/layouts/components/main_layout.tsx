@@ -4,7 +4,7 @@ import Helmet from 'react-helmet';
 
 import HeaderView from '../../core/components/header_view';
 import AuthContainer from '../../core/containers/auth_container';
-
+import Loading from '../../core/components/loading_view';
 import { Segment, Grid, Column } from 'semanticui-react';
 import jss from 'jss';
 
@@ -44,7 +44,7 @@ export class Layout extends React.Component<IProps, {}> {
               <Column>
                 <Header />
                 <If condition={this.props.loggingIn}>
-                  ....
+                  <Loading what="Logging in ..." />
                 <Else />
                   <div id="main">
                     { this.props.children }

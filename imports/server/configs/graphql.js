@@ -1,9 +1,8 @@
 import { createApolloServer } from 'meteor/apollo';
-import { schemas, resolvers } from 'meteor/tomi:apollo-mantra';
+import { schemas, resolvers } from 'apollo-mantra/server';
 import createSchemas from '../data/schemas/index';
 export default function () {
     createSchemas();
-    console.log();
     // const schema = `{\n${schemas().join('').replace(/\\n/g, '\n')}\n}`;
     // let m = schema.split('\n');
     // let i = 0;
