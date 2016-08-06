@@ -32,15 +32,15 @@ export function createBinder(store) {
                 if (timeout && currentSelector === lastSelector) {
                     clearTimeout(timeout);
                 }
-                let value = e.currentTarget['value'];
-                timeout = setTimeout(() => {
-                    store.dispatch({
-                        type: actionName,
-                        selector,
-                        action: updateAction,
-                        value
-                    });
-                }, 300);
+                let value = e.currentTarget ? e.currentTarget['value'] : e;
+                //timeout = setTimeout(() => {
+                store.dispatch({
+                    type: actionName,
+                    selector,
+                    action: updateAction,
+                    value
+                });
+                //}, 300);
                 lastSelector = currentSelector;
             };
         };

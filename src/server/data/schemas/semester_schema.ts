@@ -39,12 +39,12 @@ const queries = {
     return Semesters.findOne({_id: id});
   },
   semesters(root: any, props: any, { userId }: Apollo.IApolloContext): Cs.Collections.ISemesterDAO[] {
-    if (!userId) {
-      return null;
-    }
+    // if (!userId) {
+    //   return null;
+    // }
     return Semesters.find().fetch();
   }
-}
+};
 
 const resolvers = {
   Semester: {
@@ -52,13 +52,13 @@ const resolvers = {
       return Practicals.find({ _id: { $in: semester.practicals }}, { fields: { _id: 1, name: 1, description: 1 }}).fetch();
     }
   }
-}
+};
 
 const definition: IApolloDefinition = {
   schema,
   resolvers,
   queries,
   queryText
-}
+};
 
 export default definition;

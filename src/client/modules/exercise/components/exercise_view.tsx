@@ -16,8 +16,10 @@ export interface IComponentProps {
   context: Cs.IContext;
   userId: string;
   user: Cs.Accounts.SystemUser;
-  data?: {
+  exerciseData?: {
     exercise: Cs.Collections.IExerciseDAO;
+  },
+  solutionData?: {
     solutions: Cs.Collections.ISolutionDAO[];
     refetch: Function;
     loading: boolean;
@@ -25,10 +27,10 @@ export interface IComponentProps {
 }
 
 export interface IComponentMutations {
-  answers: (solutionIds: string[], userAnswers: string[]) => any;
+  answers: (solutionIds: string[], userAnswers: string[], finished: boolean) => any;
 }
 
-interface IComponentActions { 
+interface IComponentActions {
   answer(answers: Function, ids: String[], userAnswers: String[], data: any, submit: boolean): any;
 }
 interface IComponent extends IContainerProps, IComponentProps, IComponentActions, Apollo.IComponentMutations<IComponentMutations> { }
@@ -49,44 +51,66 @@ function readSolutionIds(solutions: Cs.Entities.ISolution[]): string[] {
   return solutions.map(s => s._id);
 }
 
-const ExerciseView = ({ context, user, params, userId, data, data: { exercise, solutions }, answer, mutations: { answers }}: IComponent) => (
-  <div>
-    <Choose>
-      <When condition={!exercise}>
-        <Loading />
-      </When>
-      <Otherwise>
+const ExerciseView = ({ context, user, params, userId, exerciseData,
+  exerciseData: { exercise },
+  solutionData, solutionData: { solutions },
+  answer, mutations: { answers }}: IComponent) => (
+    <div>
+      <Choose>
+        <When condition={!user}>
+          <Segment>
+            User Logged Out
+          </Segment>
+        </When>
+        <When condition={!exercise}>
+          <Loading />
+        </When>
+        <Otherwise>
+          <div>
+            <Segment>
+              <If condition={user.isRole('tutor')}>
+                <Button floated="right" color="orange" text="Modify" icon="edit" labeled="left" url={`/admin/exercise/${context.Utils.Router.encodeUrlName(exercise.name)}/${params.exerciseId}/${params.semesterId}`} />
+              </If>
+              <Button floated="right" color="default" text="Back to Practical" icon="arrow left" labeled="left" url={`/practical/1/${params.practicalId}/${params.semesterId}`} />
+              <Header2 dividing text={`${exercise.name}`} icon="edit" />
+              <MarkdownView text={exercise.instructions} />
 
-        <Segment>
-          <If condition={user.isRole('tutor')}>
-            <Button floated="right" color="orange" text="Modify" icon="edit" labeled="left" url={`/admin/exercise/${context.Utils.Router.encodeUrlName(exercise.name)}/${params.exerciseId}/${params.semesterId}`} />
-          </If>
-          <Button floated="right" color="default" text="Back to Practical" icon="arrow left" labeled="left" url={`/practical/1/${params.practicalId}/${params.semesterId}`} />
-          <Header2 dividing text={`${exercise.name}`} icon="edit" />
-          <MarkdownView text={exercise.instructions} />
 
-          <For each="question" of={exercise.questions} index="index">
-            <SolutionView key={question._id} question={question} solutionId={solutions.find((s) => s.questionId === question._id)._id} />
-          </For>
-        </Segment>
+              <For each="question" of={exercise.questions} index="index">
+                <SolutionView key={question._id} question={question} solutionId={solutions.find((s) => s.questionId === question._id)._id} />
+              </For>
 
-        <Button color="green" text="Submit to Tutor" floated="right"
-          onClick={() => {
-            const ids = readSolutionIds(solutions);
-            const userAnswers = readSolutions(context.Store, ids);
-            answer(answers, ids, userAnswers, data, true);
-          } } />
+            </Segment>
 
-        <Button color="primary" text="Submit" floated="right"
-          onClick={() => {
-            const ids = readSolutionIds(solutions);
-            const userAnswers = readSolutions(context.Store, ids);
-            answer(answers, ids, userAnswers, data, false);
-          } } />
-      </Otherwise>
-    </Choose>
-  </div>
-);
+            <If condition={solutions && solutions.length && !solutions[0].finished}>
+              <Button color="green" text="Submit to Tutor" floated="right"
+                onClick={() => {
+                  const ids = readSolutionIds(solutions);
+                  const userAnswers = readSolutions(context.Store, ids);
+                  answer(answers, ids, userAnswers, solutionData, true);
+                } } />
+            </If>
+
+            <If condition={solutions && solutions.length && solutions[0].finished}>
+              <Button color="red" text="Unsubmit"
+                onClick={() => {
+                  const ids = readSolutionIds(solutions);
+                  const userAnswers = readSolutions(context.Store, ids);
+                  answer(answers, ids, userAnswers, solutionData, false);
+                } } />
+            </If>
+
+            <Button color="primary" text="Save" floated="right" labeled="left" icon="save"
+              onClick={() => {
+                const ids = readSolutionIds(solutions);
+                const userAnswers = readSolutions(context.Store, ids);
+                answer(answers, ids, userAnswers, solutionData, false);
+              } } />
+          </div>
+        </Otherwise>
+      </Choose>
+    </div>
+  );
 
 
 export default ExerciseView;

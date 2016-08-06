@@ -4,7 +4,6 @@ import * as actions from '../actions/exercise_actions';
 import { Random } from 'meteor/random';
 
 const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGraphQlProps<IContainerProps>): Apollo.IGraphqlQuery => {
-  console.log('Exercise container ...');
   return {
     data: {
       query: gql`

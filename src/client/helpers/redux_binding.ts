@@ -33,22 +33,22 @@ export function createBinder(store: Cs.IStore) {
       const selector = createSelector(mainSelectorText, selectorText);
       const currentSelector = JSON.stringify(selector);
 
-      return function changed(e: React.SyntheticEvent) {
+      return function changed(e: any) {
         // we dispatch only if user finished typing
         if (timeout && currentSelector === lastSelector) {
           clearTimeout(timeout);
         }
 
-        let value = e.currentTarget['value'];
+        let value = e.currentTarget ? e.currentTarget['value'] : e;
 
-        timeout = setTimeout(() => {
+        //timeout = setTimeout(() => {
           store.dispatch({
             type: actionName,
             selector,
             action: updateAction,
             value
           });
-        }, 300);
+        //}, 300);
         lastSelector = currentSelector;
       };
     };

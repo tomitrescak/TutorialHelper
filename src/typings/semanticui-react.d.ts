@@ -270,6 +270,8 @@ declare module "semanticui-react" {
     rightLabel?: string;
     inline?: boolean;
     step?: string;
+    readOnly?: boolean;
+    disabled?: boolean; 
   }
 
   export class Input extends React.Component<IInput, {}> {

@@ -20,9 +20,9 @@ const queries = {
         return Semesters.findOne({ _id: id });
     },
     semesters(root, props, { userId }) {
-        if (!userId) {
-            return null;
-        }
+        // if (!userId) {
+        //   return null;
+        // }
         return Semesters.find().fetch();
     }
 };

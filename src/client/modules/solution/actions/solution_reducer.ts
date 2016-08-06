@@ -20,8 +20,10 @@ export default function reducer(state: ISolutionState = { solutions: {}}, action
 
   // take care of query copies
   switch (getQuery(action)) {
-    case 'exercise':
+    case 'solutions':
       return copyQuery(state, 'solutions', action.result.data.solutions);
+    case 'markingSolutions':
+      return copyQuery(state, 'solutions', action.result.data.markingSolutions, '_id', false);
   }
   return state;
 }

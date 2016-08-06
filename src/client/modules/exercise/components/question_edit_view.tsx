@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Grid, Column, Segment, Input, Button, Divider, Label, TextArea, Form, Accordion, AccordionItem } from 'semanticui-react';
+import { Grid, Column, Segment, Input, Button, Divider, Label, TextArea, Form, Accordion, AccordionItem, Dropdown, DropdownItem } from 'semanticui-react';
 import jss from 'jss';
 
 interface IContainerProps { }
@@ -32,9 +32,13 @@ const QuestionEditView = ({question, bind, index}: IComponent) => {
       <TextArea defaultValue={question.description} previewMarkdown={true} label="Description" onChange={bind(`questions.${index}.description`)} />
       <Input defaultValue={question.question} label="Question" onChange={bind(`questions.${index}.question`)} />
       <Input defaultValue={question.expectedAnswer} label="Expected Answer" onChange={bind(`questions.${index}.expectedAnswer`)} />
-      <TextArea defaultValue={question.validation} label="Validation" rows={2} onChange={bind(`questions.${index}.validation`)} />
+      {/*<TextArea defaultValue={question.validation} label="Validation" rows={2} onChange={bind(`questions.${index}.validation`)} />*/}
+      {/*<Dropdown id={question._id + '_control'} activation="click" value={question.control} defaultText={question.control} onChange={bind(`questions.${index}.control`)}>
+        <DropdownItem text="Input" value="input" />
+        <DropdownItem text="Textarea" value="textbox" />
+      </Dropdown>*/}
       <Input defaultValue={question.control} label="Control" onChange={bind(`questions.${index}.control`)} />
-      <Input defaultValue={question.points} label="Points" onChange={bind(`questions.${index}.points`)} />
+      {/*<Input defaultValue={question.points} label="Points" onChange={bind(`questions.${index}.points`)} />*/}
 
       <If condition={question.possibilities}>
         <Divider />

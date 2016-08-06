@@ -44,15 +44,16 @@ const schema = `
     created: Date
     modified: Date
     finished: Boolean
+    tutorComment: String
   }
 `;
 const queryText = `
   exercise(id: String, userId: String): Exercise
-  solutions(semesterId: String, practicalId: String, exerciseId: String): [Solution]
-  markingSolutions(semesterId: String, practicalId: String): [Solution]
+  solutions(semesterId: String, practicalId: String, exerciseId: String, userId: String): [Solution]
+  markingSolutions(semesterId: String, practicalId: String, userId: String): [Solution]
 `;
 const queries = {
-    exercise(root, { id }, { user }) {
+    exercise(root, { id }, { user, userId }) {
         if (!user) {
             return null;
         }
@@ -60,16 +61,16 @@ const queries = {
     },
     markingSolutions(root, { semesterId, practicalId }, { user }) {
         if (!user || user.roles.indexOf('tutor') === -1) {
-            return null;
+            return [];
         }
         return Solutions.find({ semesterId, practicalId }).fetch();
     },
     solutions(root, { semesterId, practicalId, exerciseId }, { userId, user }) {
         if (!userId) {
-            return null;
+            return [];
         }
         const options = { fields: { expectedAnswer: 0 } };
-        let solutions = Solutions.find({ userId, semesterId, exerciseId }, options).fetch();
+        let solutions = Solutions.find({ userId, semesterId, practicalId, exerciseId }, options).fetch();
         // if there are no attempted solutions pre create ones
         if (solutions.length === 0) {
             const exercise = Exercises.findOne({ _id: exerciseId });
@@ -108,27 +109,35 @@ const queries = {
 };
 const mutationText = `
   answers(solutionIds: [String]!, userAnswers: [String]!, finished: Boolean): [Float]
-  mark(solutionId: String, mark: Float, answerValid: Boolean): Boolean
+  mark(solutionIds: [String]!, comments: [String]!, marks: [Float]!): Boolean
   save(exercise: ExerciseInput): Boolean
 `;
 const mutations = {
-    mark(root, { solutionId, mark }, { user, userId }) {
+    mark(root, { solutionIds, comments, marks }, { user, userId }) {
         // check for tutor
         if (!user.roles.find((r) => r === 'tutor')) {
             return;
         }
-        Solutions.update({ _id: solutionId }, { $set: { mark } });
+        let total = 0;
+        for (let i = 0; i < solutionIds.length; i++) {
+            let cm = marks[i] ? marks[i] : 0;
+            Solutions.update({ _id: solutionIds[i] }, {
+                $set: {
+                    mark: cm,
+                    tutorComment: comments[i]
+                }
+            });
+        }
     },
     save(root, { exercise }, { user }) {
         if (!user.roles.find((r) => r === 'tutor')) {
             return;
         }
-        console.log(JSON.stringify(exercise, null, 2));
         // first update the exercise 
         Exercises.update({ _id: exercise._id }, {
             $set: {
                 name: exercise.name,
-                instruction: exercise.instructions,
+                instructions: exercise.instructions,
                 questions: exercise.questions.map((e) => e._id)
             }
         });
@@ -147,36 +156,36 @@ const mutations = {
             const modified = new Date;
             for (let i = 0; i < solutionIds.length; i++) {
                 const solutionId = solutionIds[i];
-                const userAnswer = userAnswers[i].replace(/ /g, '').toLowerCase();
+                const userAnswer = userAnswers[i]; // .replace(/ /g, '').toLowerCase();
                 const solution = Solutions.findOne({ _id: solutionId, userId });
                 if (!solution) {
                     throw new Error('Access violation!');
                 }
-                const exercise = Exercises.findOne(solution.exerciseId);
-                const question = Questions.findOne(solution.questionId);
-                // we either have to check according to custom question (from possibilities) or default question (from question)
-                let expectedAnswer = solution.expectedAnswer ? solution.expectedAnswer : question.expectedAnswer;
-                let mark = null;
-                if (expectedAnswer) {
-                    // remove spacen and put all to lowercas
-                    expectedAnswer = expectedAnswer.replace(/ /g, '').toLowerCase();
-                    // question can contain a validation script
-                    // validation script returns function
-                    if (question.validation) {
-                        let validationText = `function (exercise, question, expectedAnswer, userAnswer) { ${question.validation} }`;
-                        let validation = eval(validationText);
-                        if (validation(exercise, question, expectedAnswer, userAnswer)) {
-                            mark = question.points;
-                        }
-                    }
-                    else {
-                        if (expectedAnswer && userAnswer) {
-                            mark = expectedAnswer === userAnswer ? question.points : 0;
-                        }
-                    }
-                }
-                answers[i] = mark;
-                Solutions.update({ _id: solution._id }, { $set: { userAnswer, mark, finished, modified } });
+                // const exercise = Exercises.findOne(solution.exerciseId);
+                // const question = Questions.findOne(solution.questionId);
+                // // we either have to check according to custom question (from possibilities) or default question (from question)
+                // let expectedAnswer: string = solution.expectedAnswer ? solution.expectedAnswer : question.expectedAnswer;
+                // let mark: number = null;
+                // if (expectedAnswer) {
+                //   // remove spacen and put all to lowercas
+                //   expectedAnswer = expectedAnswer.replace(/ /g, '').toLowerCase();
+                //   // question can contain a validation script
+                //   // validation script returns function
+                //   if (question.validation) {
+                //     let validationText = `function (exercise, question, expectedAnswer, userAnswer) { ${question.validation} }`;
+                //     let validation = eval(validationText);
+                //     if (validation(exercise, question, expectedAnswer, userAnswer)) {
+                //       mark = question.points;
+                //     }
+                //   } else {
+                //     if (expectedAnswer && userAnswer) {
+                //       mark = expectedAnswer === userAnswer ? question.points : 0;
+                //     }
+                //   }
+                //}
+                answers[i] = 0;
+                console.log(userAnswer);
+                Solutions.update({ _id: solution._id }, { $set: { userAnswer, finished, modified } });
             }
             return answers;
         }

@@ -44,7 +44,7 @@ const queries = {
     }
     return Practicals.findOne({ _id: id });
   }
-}
+};
 
 const resolvers = {
   Practical: {
@@ -52,13 +52,13 @@ const resolvers = {
       return Exercises.find({ _id: { $in: practical.exercises } }).fetch();
     }
   }
-}
+};
 
 const definition: IApolloDefinition = {
   schema,
   resolvers,
   queries,
   queryText
-}
+};
 
 export default definition;

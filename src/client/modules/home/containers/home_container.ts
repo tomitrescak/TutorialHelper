@@ -4,8 +4,8 @@ import { connect, loadingContainer } from 'apollo-mantra';
 
 const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGraphQlProps<{}>): Apollo.IGraphqlQuery => {
   return {
-  data: {
-    query: gql`
+    data: {
+      query: gql`
       query semesters($userId: String) {
         semesters(userId: $userId) {
           _id,
@@ -18,11 +18,11 @@ const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGr
         }
       }
     `,
-    variables: {
-      userId: state.accounts.user
+      variables: {
+        userId: state.accounts.user
+      }
     }
-  }
-}
+  };
 };
 
 const mapStateToProps = (context: Cs.IContext, state: Cs.IState) => ({
@@ -30,6 +30,6 @@ const mapStateToProps = (context: Cs.IContext, state: Cs.IState) => ({
   user: state.accounts.user
 });
 
-export default connect({mapQueriesToProps, mapStateToProps})(loadingContainer(HomeView));
+export default connect({ mapQueriesToProps, mapStateToProps })(loadingContainer(HomeView));
 
 //export default AuthContainer(HomeView);

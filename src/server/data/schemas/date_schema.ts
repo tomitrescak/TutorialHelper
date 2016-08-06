@@ -14,11 +14,11 @@ const resolvers = {
       return value.getTime();
     }
   }
-}
+};
 
 const def: IApolloDefinition = {
   schema,
   resolvers
-}
+};
 
 export default def;

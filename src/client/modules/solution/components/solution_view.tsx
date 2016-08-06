@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Input, Divider, Label } from 'semanticui-react';
+import { Input, Divider, Label, Message } from 'semanticui-react';
 import MarkdownView from '../../core/containers/markdown_container';
 import jss from 'jss';
 
@@ -36,14 +36,18 @@ const SolutionView = ({ context, question, solution}: IComponent) => {
         <label>{questionText}</label>
         <Choose>
           <When condition={question.control === 'textarea'}>
-            <textarea className={classes.textbox} rows="3" placeholder={questionText} defaultValue={solution.userAnswer} onChange={bind('userAnswer')}></textarea>
+            <textarea readOnly={solution.finished} className={classes.textbox} rows="3" placeholder={questionText} defaultValue={solution.userAnswer} onChange={bind('userAnswer')}></textarea>
           </When>
           <Otherwise>
-            <Input defaultValue={solution.userAnswer} placeholder={questionText} onChange={bind('userAnswer')} />
+            <Input readOnly={solution.finished} defaultValue={solution.userAnswer} placeholder={questionText} onChange={bind('userAnswer')} />
           </Otherwise>
         </Choose>
+        
         <If condition={solution.mark != null}>
           <Label color="blue" text={'Mark: ' + solution.mark} />
+        </If>
+        <If condition={solution.mark == null && solution.finished}>
+          <Label color="grey" text="Finished" />
         </If>
         <Choose>
           <When condition={solution.mark != null && solution.mark > 0 && solution.mark < question.points}>
@@ -56,6 +60,9 @@ const SolutionView = ({ context, question, solution}: IComponent) => {
             <Label color="red" text="Incorrect" />
           </When>
         </Choose>
+        <If condition={solution.tutorComment}>
+          <Message color="blue"><b>Tutor comment: </b>{solution.tutorComment}</Message>
+        </If>
       </div>
     </div>
   );

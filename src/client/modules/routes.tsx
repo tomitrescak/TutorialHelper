@@ -23,6 +23,7 @@ const AppRoutes = ({ history, injectDeps }: any) => {
         <Route path="exercise/:name/:exerciseId/:practicalId/:semesterId" component={Exercise} />
         <Route path="admin/exercise/:name/:exerciseId/:semesterId" component={ExerciseAdmin} />
         <Route path="marking/practical/:name/:practicalId/:semesterId" component={Marking} />
+        <Route path="marking/:practicalName/:userName/:userId/:exerciseId/:practicalId/:semesterId" component={Marking} />
       </Route>
     </Router>
   );

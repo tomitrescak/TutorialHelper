@@ -1,10 +1,10 @@
 import ExerciseView from '../components/exercise_view';
-import { connect } from 'apollo-mantra';
+import { connect, loadingContainer } from 'apollo-mantra';
 const mapQueriesToProps = (context, { state, ownProps }) => {
     return {
-        data: {
+        exerciseData: {
             query: gql `
-      query exercise($exerciseId: String, $practicalId: String, $semesterId: String, $userId: String) {
+      query exercise($exerciseId: String, $userId: String) {
         exercise(id: $exerciseId, userId: $userId) {
           _id
           name
@@ -17,18 +17,28 @@ const mapQueriesToProps = (context, { state, ownProps }) => {
             points
           }
         }
-
-        solutions(semesterId: $semesterId, practicalId: $practicalId, exerciseId: $exerciseId) {
+      }
+    `,
+            variables: {
+                exerciseId: ownProps.params.exerciseId,
+                userId: state.accounts.userId
+            }
+        },
+        solutionData: {
+            query: gql `
+      query solutions($exerciseId: String, $practicalId: String, $semesterId: String, $userId: String) {
+        solutions(semesterId: $semesterId, practicalId: $practicalId, exerciseId: $exerciseId, userId: $userId) {
           _id
           questionId
           userQuestion
           userAnswer
           mark
+          tutorComment
+          finished
         }
       }
-
     `,
-            pollInterval: 5000,
+            // pollInterval: 5000,
             variables: {
                 exerciseId: ownProps.params.exerciseId,
                 userId: state.accounts.userId,
@@ -39,15 +49,16 @@ const mapQueriesToProps = (context, { state, ownProps }) => {
     };
 };
 const mapMutationsToProps = (context, { state, ownProps }) => ({
-    answers: (solutionIds, userAnswers) => ({
+    answers: (solutionIds, userAnswers, finished) => ({
         mutation: gql `
-        mutation answers($solutionIds: [String]!, $userAnswers: [String]!) {
-          answers(solutionIds: $solutionIds, userAnswers: $userAnswers) 
+        mutation answers($solutionIds: [String]!, $userAnswers: [String]!, $finished: Boolean) {
+          answers(solutionIds: $solutionIds, userAnswers: $userAnswers, finished: $finished) 
         }
       `,
         variables: {
             solutionIds,
             userAnswers,
+            finished
         },
     }),
 });
@@ -74,4 +85,4 @@ const mapDispatchToProps = (context, dispatch, ownProps) => ({
         });
     }
 });
-export default connect({ mapQueriesToProps, mapMutationsToProps, mapStateToProps, mapDispatchToProps })(ExerciseView);
+export default connect({ mapQueriesToProps, mapMutationsToProps, mapStateToProps, mapDispatchToProps })(loadingContainer(ExerciseView, ['exerciseData', 'solutionData']));

@@ -1,12 +1,12 @@
-import MarkingView, { IContainerProps, IComponentMutations, IComponentProps } from '../components/marking_view';
+import MarkingView, { IContainerProps, IComponentActions, IComponentProps } from '../components/marking_view';
 import { connect, loadingContainer } from 'apollo-mantra';
+import * as actions from '../actions/marking_actions';
 
 const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGraphQlProps<IContainerProps>): Apollo.IGraphqlQuery => {
-  console.log('Exercise container ...');
   return {
-  data: {
-    query: gql`
-      query exercise($practicalId: String, $semesterId: String, $userId: String) {
+    practicalData: {
+      query: gql`
+      query practical($practicalId: String, $userId: String) {
         practical(id: $practicalId, userId: $userId) {
           _id,
           name,
@@ -22,54 +22,81 @@ const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGr
             }
           }
         }
-
-        markingSolutions(semesterId: $semesterId, practicalId: $practicalId) {
+      }
+    `,
+      variables: {
+        practicalId: ownProps.params.practicalId,
+        userId: state.accounts.userId,
+      }
+    },
+    solutionData: {
+      query: gql`
+      query markingSolutions($practicalId: String, $semesterId: String, $userId: String) {
+        markingSolutions(semesterId: $semesterId, practicalId: $practicalId, userId: $userId) {
           _id
           user
+          userId
           questionId
           practicalId
           exerciseId
           userQuestion
           userAnswer
-          userAnswerValid
+          tutorComment
+          finished
+          modified
           mark
         }
       }
 
     `,
-    pollInterval: 5000,
-    variables: {
-      practicalId: ownProps.params.practicalId,
-      semesterId: ownProps.params.semesterId,
-      userId: state.accounts.userId,
+      pollInterval: 10000,
+      variables: {
+        practicalId: ownProps.params.practicalId,
+        semesterId: ownProps.params.semesterId,
+        userId: state.accounts.userId,
+      }
     }
-  },
-}
+  }
 };
 
 const mapMutationsToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGraphQlProps<IContainerProps>): IComponentMutations => ({
-  answers: (solutionIds: string[], userAnswers: string[]) => ({
+  markMutation: (solutionIds: string[], comments: string[], marks: number[]) => ({
     mutation: gql`
-        mutation answers(
+        mutation mark(
           $solutionIds: [String]!
-          $userAnswers: [String]!
+          $comments: [String]!
+          $marks: [Float]!
         ) {
-          answers(
+          mark(
             solutionIds: $solutionIds
-            userAnswers: $userAnswers
+            comments: $comments
+            marks: $marks
           ) 
         }
       `,
     variables: {
       solutionIds,
-      userAnswers,
+      comments,
+      marks
     },
   }),
 });
 
 const mapStateToProps = (context: Cs.IContext, state: Cs.IState): IComponentProps => ({
   context,
-  userId: state.accounts.userId
+  userId: state.accounts.userId,
+  showMarked: state.marking.showMarked,
+  showPending: state.marking.showPending
 });
 
-export default connect({ mapQueriesToProps, mapMutationsToProps, mapStateToProps })(loadingContainer(MarkingView));
+const mapDispatchToProps = (context: Cs.IContext, dispatch: Function): IComponentActions => ({
+  toggleMarked() {
+    dispatch(actions.toggleMarked());
+  },
+  togglePending() {
+    dispatch(actions.togglePending());
+  }
+});
+
+
+export default connect({ mapQueriesToProps, mapMutationsToProps, mapStateToProps, mapDispatchToProps })(loadingContainer(MarkingView, ['practicalData', 'solutionData']));
