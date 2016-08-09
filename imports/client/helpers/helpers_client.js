@@ -274,6 +274,33 @@ export const ClassUtils = {
             return rv;
         }, []);
     },
+    filterByObject(obj, filters) {
+        let result = [];
+        let filts = Object.getOwnPropertyNames(filters);
+        let allGood = true;
+        for (let key of Object.getOwnPropertyNames(obj)) {
+            for (let filt of filts) {
+                allGood = true;
+                if (obj[key][filt] !== filters[filt]) {
+                    allGood = false;
+                    break;
+                }
+            }
+            if (allGood) {
+                result.push(obj[key]);
+            }
+        }
+        return result;
+    },
+    filter(obj, filter) {
+        let result = [];
+        for (let key in Object.getOwnPropertyNames(obj)) {
+            if (filter(obj[key])) {
+                result.push(obj[key]);
+            }
+        }
+        return result;
+    },
     groupByObject(xs, key) {
         return xs.reduce(function (rv, x) {
             let v = key instanceof Function ? key(x) : x[key];

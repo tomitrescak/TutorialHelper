@@ -3,6 +3,7 @@ import { Header2, Header5, TextArea, Input, Button, Segment, Grid, Column, Items
 
 import * as actions from '../../solution/actions/solution_actions';
 import MarkingQuestionView from '../containers/marking_question_container';
+import Loading from '../../core/components/loading_view';
 
 export interface IContainerProps {
   params: {
@@ -20,6 +21,7 @@ export interface IComponentProps {
   userId: string;
   showMarked: boolean;
   showPending: boolean;
+  solutions: { [index: string]: Cs.Collections.ISolutionDAO };
   practicalData?: {
     practical: Cs.Entities.IPractical;
   },
@@ -44,18 +46,29 @@ let index: number;
 const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, togglePending,
   mutations: { markMutation },
   practicalData: { practical },
-  solutionData, solutionData: { markingSolutions }}: IComponent) => {
+  solutionData, solutions }: IComponent) => {
+
+      // in case there are no solutions we are done
+    if (!practical) {
+        return <Loading what="Loading practical ..."/>;
+    }
+    const groupBy = context.Utils.Class.groupByArray;
+    // console.log('Render marking ...: ');
+    // console.log(solutionData.markingSolutions);
+    // filter solution by practical and semester
+    
+  const usol = context.Utils.Class.filterByObject<Cs.Entities.ISolution>(solutions, { userId: params.userId, exerciseId: params.exerciseId });
 
   return (
     <Grid columns={2}>
       <Column width={10}>
         <Choose>
-          <When condition={params.userId}>
+          <When condition={usol.length}>
             <MarkingExerciseView context={context}
               markMutation={markMutation}
               practical={practical}
               exerciseId={params.exerciseId}
-              userSolutions={markingSolutions.filter((s) => s.userId === params.userId && s.exerciseId === params.exerciseId)} />
+              userSolutions={usol} />
           </When>
           <Otherwise>
             <Message>Please select a user exercise</Message>
@@ -74,9 +87,10 @@ const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, t
             semesterId={params.semesterId}
             showMarked={showMarked}
             showPending={showPending}
-            markingSolutions={markingSolutions}
+            solutions={solutions}
             userId={params.userId}
             exerciseId={params.exerciseId}
+            solutionData={solutionData}
             />
         </div>
       </Column>
@@ -92,14 +106,18 @@ interface IUsersView {
   showMarked: boolean;
   showPending: boolean;
   practical: Cs.Entities.IPractical;
-  markingSolutions: Cs.Entities.ISolution[];
+  solutions: { [index: string]: Cs.Entities.ISolution };
+  solutionData: any;
 }
 
 class UsersView extends React.Component<IUsersView, {}> {
 
+
   render() {
-    const {context, practical, showMarked, showPending, semesterId, markingSolutions } = this.props;
+    const {context, practical, showMarked, showPending, semesterId, solutions } = this.props;
     const groupBy = context.Utils.Class.groupByArray;
+
+    let markingSolutions = context.Utils.Class.filterByObject<Cs.Entities.ISolution>(solutions, { practicalId: practical._id, semesterId });
     let users = groupBy<Cs.Entities.ISolution>(markingSolutions, 'user');
 
     console.log('Users render ...');
@@ -134,7 +152,13 @@ class UsersView extends React.Component<IUsersView, {}> {
   }
 
   shouldComponentUpdate(nextProps: IUsersView) {
-    return this.props.userId === nextProps.userId && this.props.exerciseId === nextProps.exerciseId;
+    if (this.props.showMarked != nextProps.showMarked || 
+        this.props.showPending != nextProps.showPending || 
+        this.props.solutions != nextProps.solutions || 
+        nextProps.solutionData.markingSolutions && nextProps.solutionData.markingSolutions.length) {
+      return true;
+    } 
+    return false;
   }
 }
 

@@ -334,6 +334,37 @@ export const ClassUtils = {
     }, []
     );
   },
+  filterByObject<T>(obj: Object, filters: Object): T[] {
+    let result: T[] = [];
+    let filts = Object.getOwnPropertyNames(filters);
+    let allGood = true;
+
+    for (let key of Object.getOwnPropertyNames(obj)) {
+      for (let filt of filts) {
+        allGood = true;
+        if (obj[key][filt] !== filters[filt]) {
+          allGood = false;
+          break;
+        }
+      }
+      if (allGood) {
+        result.push(obj[key]);
+      }
+    }
+
+    return result;
+  },
+  filter<T>(obj: Object, filter: (s: T) => boolean) {
+    let result: T[] = [];
+
+    for (let key in Object.getOwnPropertyNames(obj)) {
+      if (filter(obj[key])) {
+        result.push(obj[key]);
+      }
+    }
+
+    return result;
+  },
   groupByObject(xs: Array<any>, key: string | Function) {
     return xs.reduce(function (rv, x) {
       let v = key instanceof Function ? key(x) : x[key];

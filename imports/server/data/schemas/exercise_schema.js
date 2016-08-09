@@ -50,7 +50,7 @@ const schema = `
 const queryText = `
   exercise(id: String, userId: String): Exercise
   solutions(semesterId: String, practicalId: String, exerciseId: String, userId: String): [Solution]
-  markingSolutions(semesterId: String, practicalId: String, userId: String): [Solution]
+  markingSolutions(semesterId: String, practicalId: String, lastModification: Date, userId: String): [Solution]
 `;
 const queries = {
     exercise(root, { id }, { user, userId }) {
@@ -59,11 +59,11 @@ const queries = {
         }
         return Exercises.findOne({ _id: id });
     },
-    markingSolutions(root, { semesterId, practicalId }, { user }) {
+    markingSolutions(root, { semesterId, practicalId, lastModification }, { user }) {
         if (!user || user.roles.indexOf('tutor') === -1) {
             return [];
         }
-        return Solutions.find({ semesterId, practicalId }).fetch();
+        return Solutions.find({ semesterId, practicalId, modified: { $gt: lastModification } }).fetch();
     },
     solutions(root, { semesterId, practicalId, exerciseId }, { userId, user }) {
         if (!userId) {

@@ -12,8 +12,6 @@ export default function reducer(state = { solutions: {} }, action) {
     switch (getQuery(action)) {
         case 'solutions':
             return copyQuery(state, 'solutions', action.result.data.solutions);
-        case 'markingSolutions':
-            return copyQuery(state, 'solutions', action.result.data.markingSolutions, '_id', false);
     }
     return state;
 }

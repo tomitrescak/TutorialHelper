@@ -129,7 +129,7 @@ const schema = `
 const queryText = `
   exercise(id: String, userId: String): Exercise
   solutions(semesterId: String, practicalId: String, exerciseId: String, userId: String): [Solution]
-  markingSolutions(semesterId: String, practicalId: String, userId: String): [Solution]
+  markingSolutions(semesterId: String, practicalId: String, lastModification: Date, userId: String): [Solution]
 `;
 
 const queries = {
@@ -139,11 +139,11 @@ const queries = {
     }
     return Exercises.findOne({ _id: id });
   },
-  markingSolutions(root: any, { semesterId, practicalId }: any, { user }: Apollo.IApolloContext): Cs.Collections.ISolutionDAO[] {
+  markingSolutions(root: any, { semesterId, practicalId, lastModification }: any, { user }: Apollo.IApolloContext): Cs.Collections.ISolutionDAO[] {
     if (!user || user.roles.indexOf('tutor') === -1) {
       return [];
     }
-    return Solutions.find({ semesterId, practicalId }).fetch();
+    return Solutions.find({ semesterId, practicalId, modified: { $gt: lastModification } }).fetch();
   },
   solutions(root: any, { semesterId, practicalId, exerciseId }: any, { userId, user }: Apollo.IApolloContext): Cs.Collections.ISolutionDAO[] {
     if (!userId) {

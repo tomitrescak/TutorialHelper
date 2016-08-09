@@ -1,14 +1,24 @@
 import * as React from 'react';
 import { Header2, Button, Grid, Column, Items, Item, List, ListItem, Divider, Label, Link, Message } from 'semanticui-react';
 import MarkingQuestionView from '../containers/marking_question_container';
+import Loading from '../../core/components/loading_view';
 let user;
 let index;
-const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, togglePending, mutations: { markMutation }, practicalData: { practical }, solutionData, solutionData: { markingSolutions } }) => {
+const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, togglePending, mutations: { markMutation }, practicalData: { practical }, solutionData, solutions }) => {
+    // in case there are no solutions we are done
+    if (!practical) {
+        return <Loading what="Loading practical ..."/>;
+    }
+    const groupBy = context.Utils.Class.groupByArray;
+    // console.log('Render marking ...: ');
+    // console.log(solutionData.markingSolutions);
+    // filter solution by practical and semester
+    const usol = context.Utils.Class.filterByObject(solutions, { userId: params.userId, exerciseId: params.exerciseId });
     return (<Grid columns={2}>
       <Column width={10}>
         <Choose>
-          <When condition={params.userId}>
-            <MarkingExerciseView context={context} markMutation={markMutation} practical={practical} exerciseId={params.exerciseId} userSolutions={markingSolutions.filter((s) => s.userId === params.userId && s.exerciseId === params.exerciseId)}/>
+          <When condition={usol.length}>
+            <MarkingExerciseView context={context} markMutation={markMutation} practical={practical} exerciseId={params.exerciseId} userSolutions={usol}/>
           </When>
           <Otherwise>
             <Message>Please select a user exercise</Message>
@@ -22,15 +32,16 @@ const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, t
           <Button toggle={showPending ? "active" : "inactive"} text="Show Pending" floated="right" onClick={togglePending}/>
         </div>
         <div style={{ height: '600px', width: '100%', marginTop: '10px', overflow: 'auto' }}>
-          <UsersView context={context} practical={practical} semesterId={params.semesterId} showMarked={showMarked} showPending={showPending} markingSolutions={markingSolutions} userId={params.userId} exerciseId={params.exerciseId}/>
+          <UsersView context={context} practical={practical} semesterId={params.semesterId} showMarked={showMarked} showPending={showPending} solutions={solutions} userId={params.userId} exerciseId={params.exerciseId} solutionData={solutionData}/>
         </div>
       </Column>
     </Grid>);
 };
 class UsersView extends React.Component {
     render() {
-        const { context, practical, showMarked, showPending, semesterId, markingSolutions } = this.props;
+        const { context, practical, showMarked, showPending, semesterId, solutions } = this.props;
         const groupBy = context.Utils.Class.groupByArray;
+        let markingSolutions = context.Utils.Class.filterByObject(solutions, { practicalId: practical._id, semesterId });
         let users = groupBy(markingSolutions, 'user');
         console.log('Users render ...');
         // sort by modification date, oldest to newest
@@ -50,7 +61,13 @@ class UsersView extends React.Component {
       </Items>);
     }
     shouldComponentUpdate(nextProps) {
-        return this.props.userId === nextProps.userId && this.props.exerciseId === nextProps.exerciseId;
+        if (this.props.showMarked != nextProps.showMarked ||
+            this.props.showPending != nextProps.showPending ||
+            this.props.solutions != nextProps.solutions ||
+            nextProps.solutionData.markingSolutions && nextProps.solutionData.markingSolutions.length) {
+            return true;
+        }
+        return false;
     }
 }
 let solution;

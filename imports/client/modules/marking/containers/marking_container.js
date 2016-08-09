@@ -1,6 +1,12 @@
 import MarkingView from '../components/marking_view';
-import { connect, loadingContainer } from 'apollo-mantra';
+import { connect, loggerContainer } from 'apollo-mantra';
 import * as actions from '../actions/marking_actions';
+let date = new Date('1/1/1970');
+function getLastModification() {
+    let origDate = date;
+    date = new Date();
+    return origDate;
+}
 const mapQueriesToProps = (context, { state, ownProps }) => {
     return {
         practicalData: {
@@ -30,13 +36,14 @@ const mapQueriesToProps = (context, { state, ownProps }) => {
         },
         solutionData: {
             query: gql `
-      query markingSolutions($practicalId: String, $semesterId: String, $userId: String) {
-        markingSolutions(semesterId: $semesterId, practicalId: $practicalId, userId: $userId) {
+      query markingSolutions($practicalId: String, $semesterId: String, $lastModification: Date, $userId: String) {
+        markingSolutions(semesterId: $semesterId, practicalId: $practicalId, lastModification: $lastModification, userId: $userId) {
           _id
           user
           userId
           questionId
           practicalId
+          semesterId
           exerciseId
           userQuestion
           userAnswer
@@ -48,11 +55,12 @@ const mapQueriesToProps = (context, { state, ownProps }) => {
       }
 
     `,
-            pollInterval: 10000,
+            //pollInterval: 10000,
             variables: {
                 practicalId: ownProps.params.practicalId,
                 semesterId: ownProps.params.semesterId,
                 userId: state.accounts.userId,
+                lastModification: getLastModification()
             }
         }
     };
@@ -83,14 +91,17 @@ const mapStateToProps = (context, state) => ({
     context,
     userId: state.accounts.userId,
     showMarked: state.marking.showMarked,
-    showPending: state.marking.showPending
+    showPending: state.marking.showPending,
+    solutions: state.solution.solutions
 });
-const mapDispatchToProps = (context, dispatch) => ({
-    toggleMarked() {
-        dispatch(actions.toggleMarked());
-    },
-    togglePending() {
-        dispatch(actions.togglePending());
-    }
-});
-export default connect({ mapQueriesToProps, mapMutationsToProps, mapStateToProps, mapDispatchToProps })(loadingContainer(MarkingView, ['practicalData', 'solutionData']));
+const mapDispatchToProps = (context, dispatch) => {
+    return {
+        toggleMarked() {
+            dispatch(actions.toggleMarked());
+        },
+        togglePending() {
+            dispatch(actions.togglePending());
+        }
+    };
+};
+export default connect({ mapQueriesToProps, mapMutationsToProps, mapStateToProps, mapDispatchToProps })(loggerContainer(MarkingView, ['practicalData', 'solutionData']));

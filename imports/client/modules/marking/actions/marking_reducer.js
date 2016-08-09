@@ -1,6 +1,12 @@
+import { getQuery } from 'apollo-mantra';
 import * as actions from './marking_actions';
 import update from 'react-addons-update';
-export default function reducer(state = { showMarked: false, showPending: false }, action) {
+export default function reducer(state = { showMarked: false, showPending: false, solutions: [] }, action) {
+    // take care of query copies
+    switch (getQuery(action)) {
+        case 'markingSolutions':
+            return update(state, { solutions: { $set: action.result.data.markingSolutions } });
+    }
     switch (action.type) {
         case actions.TOGGLE_MARKED:
             return update(state, { showMarked: { $set: !state.showMarked } });

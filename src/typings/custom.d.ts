@@ -492,6 +492,7 @@ declare module 'apollo-mantra' {
   export function compose<T>(funcs: IConnectFunctions): (component: any) => React.StatelessComponent<T>;
   export function connect<T>(funcs: IConnectFunctions): (component: any) => React.StatelessComponent<T>;
   export function loadingContainer(component: any, keys?: string[]): any;
+  export function loggerContainer(component: any, keys?: string[]): any;
   export function loadingContainer(component: any, loading?: any, keys?: string[]): any;
   export function copyQuery(state: Object, stateKey: string, queryResult: Object[], queryKey?: string, overwrite?: boolean): Object;
   export function isQuery(action: any, queryName: string): boolean;
