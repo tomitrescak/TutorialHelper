@@ -60,11 +60,11 @@ export class Layout extends React.Component<IProps, {}> {
   }
 
   componentWillMount() {
-    this.props.context.Utils.Ui.pageTransition();
+    // this.props.context.Utils.Ui.pageTransition();
   }
 
   componentWillUpdate() {
-    this.props.context.Utils.Ui.pageTransition();
+    // this.props.context.Utils.Ui.pageTransition();
   }
 };
 

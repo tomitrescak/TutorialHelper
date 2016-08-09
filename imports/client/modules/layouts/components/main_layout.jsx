@@ -41,10 +41,10 @@ export class Layout extends React.Component {
       </main>);
     }
     componentWillMount() {
-        this.props.context.Utils.Ui.pageTransition();
+        // this.props.context.Utils.Ui.pageTransition();
     }
     componentWillUpdate() {
-        this.props.context.Utils.Ui.pageTransition();
+        // this.props.context.Utils.Ui.pageTransition();
     }
 }
 ;

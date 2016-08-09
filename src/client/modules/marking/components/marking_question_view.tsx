@@ -34,10 +34,10 @@ const MarkingQuestionView = ({ context, solution, question, stored }: IComponent
       <If condition={expectedAnswer}>
       <Message color="grey">Expected Answer: { expectedAnswer }</Message>
       </If>
-      <TextArea rows={2} label="Comment" onChange={bind('tutorComment')} defaultValue={stored.tutorComment} />
+      <TextArea rows={2} label="Comment" onChange={bind('tutorComment')} defaultValue={stored.tutorComment ? stored.tutorComment : ''} />
       <div className="ui action labeled input">
         <div className="ui label">%</div>
-        <input style={{width: '80px'}} ref={(node) => { mark = node; eventSource.currentTarget = node; } } type="number" placeholder={`Mark`} value={stored.mark} onChange={markBind} />
+        <input style={{width: '80px'}} ref={(node) => { mark = node; eventSource.currentTarget = node; } } type="number" placeholder={`Mark`} value={stored.mark || stored.mark === 0 ? stored.mark : ''} onChange={markBind} />
         <Button color="green" text="Good" onClick={() => { mark.value = '100'; markBind(eventSource); } } />
         <Button color="orange" text="Kinda" onClick={() => { mark.value = '50'; markBind(eventSource); } } />
         <Button color="red" text="Bad" onClick={() => { mark.value = '0'; markBind(eventSource); } } />

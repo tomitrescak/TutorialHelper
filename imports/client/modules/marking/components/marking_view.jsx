@@ -4,18 +4,6 @@ import MarkingQuestionView from '../containers/marking_question_container';
 let user;
 let index;
 const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, togglePending, mutations: { markMutation }, practicalData: { practical }, solutionData, solutionData: { markingSolutions } }) => {
-    const groupBy = context.Utils.Class.groupByArray;
-    let users = groupBy(markingSolutions, 'user');
-    // sort by modification date
-    users = users.sort((a, b) => {
-        // find max date in a
-        let aDate = 0;
-        a.values.forEach((av) => aDate = ((av.modified && (aDate < av.modified)) ? av.modified : aDate));
-        // find max date in b
-        let bDate = 0;
-        b.values.forEach((av) => bDate = ((av.modified && (bDate < av.modified)) ? av.modified : bDate));
-        return aDate < bDate ? 1 : -1;
-    });
     return (<Grid columns={2}>
       <Column width={10}>
         <Choose>
@@ -30,20 +18,41 @@ const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, t
       </Column>
       <Column width={6}>
         <div style={{ height: '30px' }}>
-        <Button toggle={showMarked ? "active" : "inactive"} text="Show Marked" floated="right" onClick={toggleMarked}/>
-        <Button toggle={showPending ? "active" : "inactive"} text="Show Pending" floated="right" onClick={togglePending}/>
+          <Button toggle={showMarked ? "active" : "inactive"} text="Show Marked" floated="right" onClick={toggleMarked}/>
+          <Button toggle={showPending ? "active" : "inactive"} text="Show Pending" floated="right" onClick={togglePending}/>
         </div>
-        <Items>
-          <For each="user" of={users} index="index">
-            <Item.Main key={user.key}>
-              <ExercisesView userSolutions={user.values} context={context} practical={practical} semesterId={params.semesterId} userName={user.key} showMarked={showMarked} showPending={showPending}/>
-            </Item.Main>
-            <Divider />
-          </For>
-        </Items>
+        <div style={{ height: '600px', width: '100%', marginTop: '10px', overflow: 'auto' }}>
+          <UsersView context={context} practical={practical} semesterId={params.semesterId} showMarked={showMarked} showPending={showPending} markingSolutions={markingSolutions} userId={params.userId} exerciseId={params.exerciseId}/>
+        </div>
       </Column>
     </Grid>);
 };
+class UsersView extends React.Component {
+    render() {
+        const { context, practical, showMarked, showPending, semesterId, markingSolutions } = this.props;
+        const groupBy = context.Utils.Class.groupByArray;
+        let users = groupBy(markingSolutions, 'user');
+        console.log('Users render ...');
+        // sort by modification date, oldest to newest
+        users = users.sort((a, b) => {
+            // find max date in a
+            let aDate = 0;
+            a.values.forEach((av) => aDate = ((av.modified && (aDate < av.modified)) ? av.modified : aDate));
+            // find max date in b
+            let bDate = 0;
+            b.values.forEach((av) => bDate = ((av.modified && (bDate < av.modified)) ? av.modified : bDate));
+            return aDate < bDate ? -1 : 1;
+        });
+        return (<Items>
+        <For each="user" of={users} index="index">
+          <ExercisesView userSolutions={user.values} key={user.key} context={context} practical={practical} semesterId={semesterId} userName={user.key} showMarked={showMarked} showPending={showPending}/>
+        </For>
+      </Items>);
+    }
+    shouldComponentUpdate(nextProps) {
+        return this.props.userId === nextProps.userId && this.props.exerciseId === nextProps.exerciseId;
+    }
+}
 let solution;
 const MarkingExerciseView = ({ userSolutions, context, practical, exerciseId, markMutation }) => {
     const exercise = practical.exercises.find((e) => e._id === exerciseId);
@@ -95,24 +104,32 @@ const ExercisesView = ({ userSolutions, userName, context, practical, semesterId
         const eb = practical.exercises.find((e) => e._id === b.key);
         return ea.name < eb.name ? -1 : 1;
     });
+    // hide users with no exercises
+    if (exercises.length === 0) {
+        return <span />;
+    }
     let total = 0;
     userSolutions.forEach((s) => total += s.mark ? s.mark : 0);
     total = Math.round(total / userSolutions.length);
-    return (<Item.Content>
-      <Item.Header>
-        <Label color="blue" style={{ marginRight: '12px' }}>{total}%</Label> 
-        {userName} 
-      </Item.Header>
-      <Item.Description>
-        <List>
-          <For each="exercise" of={exercises} index="index">
-            <ListItem key={index}>
-              <ExerciseView userSolutions={exercise.values} context={context} practical={practical} exerciseId={exercise.key} semesterId={semesterId}/>
-            </ListItem>
-          </For>
-        </List>
-      </Item.Description>
-    </Item.Content>);
+    return (<Item.Main>
+      <Item.Content>
+        <Item.Header>
+          <Label color="blue" style={{ marginRight: '12px' }}>{total}%</Label>
+          {userName}
+        </Item.Header>
+        <Item.Description>
+          <List>
+            <For each="exercise" of={exercises} index="index">
+              <ListItem key={index}>
+                <ExerciseView userSolutions={exercise.values} context={context} practical={practical} exerciseId={exercise.key} semesterId={semesterId}/>
+              </ListItem>
+            </For>
+          </List>
+        </Item.Description>
+        <Divider />
+      </Item.Content>
+     
+    </Item.Main>);
 };
 const ExerciseView = ({ userSolutions, context, practical, exerciseId, semesterId }) => {
     const exercise = practical.exercises.find((e) => e._id === exerciseId);
