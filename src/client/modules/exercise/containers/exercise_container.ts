@@ -9,6 +9,7 @@ const mapQueriesToProps = (context: Cs.IContext, { state, ownProps }: Apollo.IGr
         exercise(id: $exerciseId, userId: $userId) {
           _id
           name
+          group
           instructions
           questions {
             _id

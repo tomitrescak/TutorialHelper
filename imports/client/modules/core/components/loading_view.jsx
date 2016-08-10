@@ -24,6 +24,7 @@ const Loading = ({ error, what }) => (<span>
     <div className="ui active small inline loader"></div>&nbsp; &nbsp; &nbsp; <Text text={what ? what : 'Loading ...'}/>
     {error && console.error(error)}
   </span>);
+Loading['displayName'] = 'Loading';
 export default Loading;
 // export default new Loading();
 // export default function ComposeLoading(what: string) {

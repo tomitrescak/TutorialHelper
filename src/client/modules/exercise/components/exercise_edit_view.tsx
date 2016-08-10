@@ -62,6 +62,7 @@ const ExerciseView = ({ context, params, userId, data, mutations: { save }, exer
       <Otherwise>
         <Segment>
           <Input label="Name" placeholder="Name" defaultValue={exercise.name} onChange={bind('name')} />
+          <Input label="Group" placeholder="Group" defaultValue={exercise.group} onChange={bind('group')} />
           <TextArea defaultValue={exercise.instructions} label="Instructions" previewMarkdown={true} onChange={bind('instructions')} />
 
           <For each="question" of={exercise.questions} index="index">

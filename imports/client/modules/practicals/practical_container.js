@@ -9,14 +9,34 @@ const mapQueriesToProps = (context, { state, ownProps }) => ({
           name,
           description,
           exercises {
-            _id,
+            _id
             name
+            group
+            questions {
+              _id
+            }
           }
         }
       }
     `,
         variables: {
             id: ownProps.params.practicalId,
+            userId: state.accounts.userId
+        }
+    },
+    solutionsData: {
+        query: gql `
+      query practicalSolutions($semesterId: String, $practicalId: String, $userId: String) {
+        practicalSolutions(semesterId: $semesterId, practicalId: $practicalId, userId: $userId) {
+          _id,
+          exerciseId,
+          mark
+        }
+      }
+    `,
+        variables: {
+            semesterId: ownProps.params.semesterId,
+            practicalId: ownProps.params.practicalId,
             userId: state.accounts.userId
         }
     }

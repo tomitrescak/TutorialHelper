@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { List, ListItem, Header2, Header3, Link, Segment } from 'semanticui-react';
+import { markCalculator } from '../../helpers/app_helpers';
 
 interface IContainerProps { }
 interface IComponentProps {
@@ -13,7 +14,10 @@ interface IComponent extends IContainerProps, IComponentProps, IComponentActions
 let practical: Cs.Collections.IPracticalDAO;
 let index: number;
 
-const PracticalListView = ({ practicals, context, semesterId }: IComponent) => (
+const PracticalListView = ({ practicals, context, semesterId }: IComponent) => {
+
+
+  return (
   <Segment>
     <Header2 dividing text="Practicals" icon="edit" />
     <List divided>
@@ -26,6 +30,6 @@ const PracticalListView = ({ practicals, context, semesterId }: IComponent) => (
     </List>
   </Segment>
 
-);
+)};
 
 export default PracticalListView;  

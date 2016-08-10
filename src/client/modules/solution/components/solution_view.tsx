@@ -49,7 +49,7 @@ const SolutionView = ({ context, question, solution}: IComponent) => {
         <If condition={solution.mark == null && solution.finished}>
           <Label color="grey" text="Finished" />
         </If>
-        <Choose>
+        {/*<Choose>
           <When condition={solution.mark != null && solution.mark > 0 && solution.mark < question.points}>
             <Label color="orange" text={'Satisfying Answer'} />
           </When>
@@ -59,7 +59,7 @@ const SolutionView = ({ context, question, solution}: IComponent) => {
           <When condition={solution.mark != null && solution.mark === 0}>
             <Label color="red" text="Incorrect" />
           </When>
-        </Choose>
+        </Choose>*/}
         <If condition={solution.tutorComment}>
           <Message color="blue"><b>Tutor comment: </b>{solution.tutorComment}</Message>
         </If>

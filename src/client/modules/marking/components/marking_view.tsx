@@ -1,9 +1,18 @@
 import * as React from 'react';
 import { Header2, Header5, TextArea, Input, Button, Segment, Grid, Column, Items, Item, List, ListItem, Divider, Label, Link, Message } from 'semanticui-react';
 
-import * as actions from '../../solution/actions/solution_actions';
+import * as actions from '../actions/marking_actions';
 import MarkingQuestionView from '../containers/marking_question_container';
 import Loading from '../../core/components/loading_view';
+import jss from 'jss';
+import { markCalculator } from '../../../helpers/app_helpers';
+
+const { classes } = jss.createStyleSheet({
+  dateInput: {
+    width: '110px',
+    float: 'right'
+  }
+}).attach();
 
 export interface IContainerProps {
   params: {
@@ -12,52 +21,46 @@ export interface IContainerProps {
     exerciseId: string,
     practicalId: string,
     semesterId: string,
-  }
+  };
 }
-
 
 export interface IComponentProps {
   context: Cs.IContext;
   userId: string;
   showMarked: boolean;
   showPending: boolean;
-  solutions: { [index: string]: Cs.Collections.ISolutionDAO };
-  practicalData?: {
-    practical: Cs.Entities.IPractical;
-  },
-  solutionData?: {
-    markingSolutions: Cs.Collections.ISolutionDAO[];
-    refetch: Function;
-    loading: boolean;
-  },
+  solutions: Cs.Entities.ISolution[];
+  practical: Cs.Entities.IPractical;
+  selectedDate: string;
   mutations?: {
     markMutation(solutionIds: string[], comments: string[], marks: number[]): void;
-  }
+  };
 }
 export interface IComponentActions {
   toggleMarked: Function;
   togglePending: Function;
+  changeDate: (date: string) => void;
 }
 export interface IComponent extends IContainerProps, IComponentProps, IComponentActions { }
 
-let user: Cs.Entities.Group<Cs.Entities.ISolution>
+let user: Cs.Entities.Group<Cs.Entities.ISolution>;
 let index: number;
 
-const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, togglePending,
-  mutations: { markMutation },
-  practicalData: { practical },
-  solutionData, solutions }: IComponent) => {
+const MarkingView = ({ context, params, showMarked, showPending, toggleMarked,
+  togglePending, mutations, practical, solutions, selectedDate, changeDate,
+  mutations: { markMutation } }: IComponent) => {
 
-      // in case there are no solutions we are done
-    if (!practical) {
-        return <Loading what="Loading practical ..."/>;
-    }
-    const groupBy = context.Utils.Class.groupByArray;
-    // console.log('Render marking ...: ');
-    // console.log(solutionData.markingSolutions);
-    // filter solution by practical and semester
-    
-  const usol = context.Utils.Class.filterByObject<Cs.Entities.ISolution>(solutions, { userId: params.userId, exerciseId: params.exerciseId });
+  // in case there are no solutions we are done
+  if (!practical || !practical.exercises || !practical.exercises[0].questions) {
+    return <Loading what="Loading practical ..."/>;
+  }
+
+  const groupBy = context.Utils.Class.groupByArray;
+  // console.log('Render marking ...: ');
+  // console.log(solutionData.markingSolutions);
+  // filter solution by practical and semester
+
+  const usol = solutions.filter((s) => s.userId === params.userId && s.exerciseId === params.exerciseId);
 
   return (
     <Grid columns={2}>
@@ -78,10 +81,11 @@ const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, t
       </Column>
       <Column width={6}>
         <div style={{ height: '30px' }}>
-          <Button toggle={showMarked ? "active" : "inactive"} text="Show Marked" floated="right" onClick={toggleMarked} />
-          <Button toggle={showPending ? "active" : "inactive"} text="Show Pending" floated="right" onClick={togglePending} />
+          <Button toggle={showMarked ? 'active' : 'inactive'} text="Marked" floated="right" onClick={toggleMarked} />
+          <Button toggle={showPending ? 'active' : 'inactive'} text="Pending" floated="right" onClick={togglePending} />
+          <Input defaultValue={selectedDate} classes={classes.dateInput} placeholder="dd/mm/yyyy" onChange={(e: React.SyntheticEvent) => changeDate(e.currentTarget['value'])} />
         </div>
-        <div style={{ height: '600px', width: '100%', marginTop: '10px', overflow: 'auto' }}>
+        <div style={{ position: 'fixed', top: '135px', bottom: '5px', overflow: 'auto' }}>
           <UsersView context={context}
             practical={practical}
             semesterId={params.semesterId}
@@ -90,12 +94,11 @@ const MarkingView = ({ context, params, showMarked, showPending, toggleMarked, t
             solutions={solutions}
             userId={params.userId}
             exerciseId={params.exerciseId}
-            solutionData={solutionData}
             />
         </div>
       </Column>
     </Grid>
-  )
+  );
 };
 
 interface IUsersView {
@@ -106,21 +109,20 @@ interface IUsersView {
   showMarked: boolean;
   showPending: boolean;
   practical: Cs.Entities.IPractical;
-  solutions: { [index: string]: Cs.Entities.ISolution };
-  solutionData: any;
+  solutions: Cs.Entities.ISolution[];
 }
 
 class UsersView extends React.Component<IUsersView, {}> {
 
 
   render() {
+    console.log('Users ...');
+
     const {context, practical, showMarked, showPending, semesterId, solutions } = this.props;
     const groupBy = context.Utils.Class.groupByArray;
 
-    let markingSolutions = context.Utils.Class.filterByObject<Cs.Entities.ISolution>(solutions, { practicalId: practical._id, semesterId });
+    let markingSolutions = solutions.filter((s) => s.practicalId === practical._id && s.semesterId === semesterId);
     let users = groupBy<Cs.Entities.ISolution>(markingSolutions, 'user');
-
-    console.log('Users render ...');
 
     // sort by modification date, oldest to newest
     users = users.sort((a, b) => {
@@ -132,7 +134,9 @@ class UsersView extends React.Component<IUsersView, {}> {
       b.values.forEach((av) => bDate = ((av.modified && (bDate < av.modified)) ? av.modified : bDate));
 
       return aDate < bDate ? -1 : 1;
-    })
+    });
+
+    let markCalc = markCalculator(practical); 
 
     return (
       <Items>
@@ -145,19 +149,19 @@ class UsersView extends React.Component<IUsersView, {}> {
             userName={user.key}
             showMarked={showMarked}
             showPending={showPending}
+            markCalc={markCalc}
             />
         </For>
       </Items>
-    )
+    );
   }
 
   shouldComponentUpdate(nextProps: IUsersView) {
-    if (this.props.showMarked != nextProps.showMarked || 
-        this.props.showPending != nextProps.showPending || 
-        this.props.solutions != nextProps.solutions || 
-        nextProps.solutionData.markingSolutions && nextProps.solutionData.markingSolutions.length) {
+    if (this.props.showMarked !== nextProps.showMarked ||
+      this.props.showPending !== nextProps.showPending ||
+      this.props.solutions !== nextProps.solutions) {
       return true;
-    } 
+    }
     return false;
   }
 }
@@ -178,6 +182,7 @@ const MarkingExerciseView = ({ userSolutions, context, practical, exerciseId, ma
   return (
     <div className="ui form">
       <Header2 text={`${user}: ${exercise.name}`} />
+      <Label color="grey">{context.Utils.Ui.relativeDate(new Date(userSolutions[0].modified))}</Label>
       <List>
         <For each="solution" of={userSolutions} index="index">
           <ListItem key={index}>
@@ -188,17 +193,18 @@ const MarkingExerciseView = ({ userSolutions, context, practical, exerciseId, ma
       <Button text="Save Marks" icon="save" labeled="left"
         floated="right" color="primary"
         onClick={() => {
-          var solutions = context.Store.getState().solution.solutions;
+          let solutions = context.Store.getState().marking.current;
 
           const ids: string[] = [];
           const comments: string[] = [];
           const marks: number[] = [];
 
           userSolutions.forEach((s) => {
+            const sol = solutions[s._id]; //.find((t) => t._id === s._id);
             ids.push(s._id);
-            comments.push(solutions[s._id].tutorComment);
-            marks.push(solutions[s._id].mark ? solutions[s._id].mark : 0);
-          })
+            comments.push(sol.tutorComment);
+            marks.push(sol.mark ? parseInt(sol.mark.toString(), 10) : 0);
+          });
 
           markMutation(ids, comments, marks).then((result: any) => {
             if (result.errors) {
@@ -211,11 +217,13 @@ const MarkingExerciseView = ({ userSolutions, context, practical, exerciseId, ma
               // solutionData.refetch();
             };
           });
+
+          context.Store.dispatch(actions.updateMarks());
         } }
         />
     </div>
-  )
-}
+  );
+};
 
 interface IExercisesView {
   context: Cs.IContext;
@@ -225,12 +233,12 @@ interface IExercisesView {
   userName: string;
   showMarked: boolean;
   showPending: boolean;
-
+  markCalc: (solutions: Cs.Entities.ISolution[]) => number;
 }
 
 let exercise: Cs.Entities.Group<Cs.Entities.ISolution>;
 
-const ExercisesView = ({userSolutions, userName, context, practical, semesterId, showMarked, showPending }: IExercisesView) => {
+const ExercisesView = ({userSolutions, userName, context, practical, semesterId, showMarked, showPending, markCalc }: IExercisesView) => {
 
   let exercises = context.Utils.Class.groupByArray(userSolutions, 'exerciseId');
   if (!showMarked) {
@@ -242,7 +250,7 @@ const ExercisesView = ({userSolutions, userName, context, practical, semesterId,
   exercises = exercises.sort((a, b) => {
     const ea = practical.exercises.find((e) => e._id === a.key);
     const eb = practical.exercises.find((e) => e._id === b.key);
-    return ea.name < eb.name ? -1 : 1
+    return ea.name < eb.name ? -1 : 1;
   });
 
   // hide users with no exercises
@@ -250,15 +258,15 @@ const ExercisesView = ({userSolutions, userName, context, practical, semesterId,
     return <span />;
   }
 
-  let total = 0;
-  userSolutions.forEach((s) => total += s.mark ? s.mark : 0);
-  total = Math.round(total / userSolutions.length);
+  let total = markCalc(userSolutions);
+  //userSolutions.forEach((s) => total += s.mark ? s.mark : 0);
+  //total = Math.round(total / userSolutions.length);
   return (
 
     <Item.Main>
       <Item.Content>
         <Item.Header>
-          <Label color="blue" style={{ marginRight: '12px' }}>{total}%</Label>
+          <Label color="blue" style={{ marginRight: '12px' }}>{total} Points</Label>
           {userName}
         </Item.Header>
         <Item.Description>
@@ -272,12 +280,12 @@ const ExercisesView = ({userSolutions, userName, context, practical, semesterId,
         </Item.Description>
         <Divider />
       </Item.Content>
-     
+
     </Item.Main>
-     
- 
-  )
-}
+
+
+  );
+};
 
 
 interface IExerciseView {
@@ -291,14 +299,17 @@ interface IExerciseView {
 const ExerciseView = ({userSolutions, context, practical, exerciseId, semesterId }: IExerciseView) => {
   const exercise = practical.exercises.find((e) => e._id === exerciseId);
   const finished = userSolutions.filter((s) => s.finished);
+  const marked = userSolutions.filter((s) => s.mark != null && s.mark >= 0);
   let total = 0;
   userSolutions.forEach((s) => total += s.mark ? s.mark : 0);
   total = Math.round(total / userSolutions.length);
 
   return (
     <div>
-      <Label color="blue">{total}%</Label>
       <Choose>
+        <When condition={marked.length > 0}>
+          <Label color="blue">{total}%</Label>
+        </When>
         <When condition={finished.length === userSolutions.length}>
           <Label color="green">Finished</Label>
         </When>
@@ -311,7 +322,7 @@ const ExerciseView = ({userSolutions, context, practical, exerciseId, semesterId
       </span>
 
     </div>
-  )
-}
+  );
+};
 
 export default MarkingView;

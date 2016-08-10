@@ -10,6 +10,7 @@ const schema = `
     _id: String
     name: String
     instructions: String
+    group: String
     questions: [Question$Input]
   }`)}
 
@@ -49,6 +50,7 @@ const schema = `
 `;
 const queryText = `
   exercise(id: String, userId: String): Exercise
+  practicalSolutions(semesterId: String, practicalId: String, userId: String): [Solution]
   solutions(semesterId: String, practicalId: String, exerciseId: String, userId: String): [Solution]
   markingSolutions(semesterId: String, practicalId: String, lastModification: Date, userId: String): [Solution]
 `;
@@ -63,7 +65,12 @@ const queries = {
         if (!user || user.roles.indexOf('tutor') === -1) {
             return [];
         }
+        console.log(lastModification);
         return Solutions.find({ semesterId, practicalId, modified: { $gt: lastModification } }).fetch();
+    },
+    practicalSolutions(root, { semesterId, practicalId }, { userId, user }) {
+        const options = { fields: { expectedAnswer: 0 } };
+        return Solutions.find({ userId, semesterId, practicalId }, options).fetch();
     },
     solutions(root, { semesterId, practicalId, exerciseId }, { userId, user }) {
         if (!userId) {
@@ -138,6 +145,7 @@ const mutations = {
             $set: {
                 name: exercise.name,
                 instructions: exercise.instructions,
+                group: exercise.group,
                 questions: exercise.questions.map((e) => e._id)
             }
         });

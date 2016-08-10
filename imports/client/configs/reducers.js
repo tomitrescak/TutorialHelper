@@ -7,6 +7,7 @@ import accountsReducer from '../modules/user/actions/user_reducer';
 import solutionReducer from '../modules/solution/actions/solution_reducer';
 import exerciseReducer from '../modules/exercise/actions/exercise_reducer';
 import markingReducer from '../modules/marking/actions/marking_reducer';
+import practicalReducer from '../modules/practicals/practical_reducer';
 // import all other reducers
 const rootReducer = combineReducers({
     accounts: accountsReducer,
@@ -14,6 +15,7 @@ const rootReducer = combineReducers({
     routing: routerReducer,
     solution: solutionReducer,
     exercise: exerciseReducer,
-    marking: markingReducer
+    marking: markingReducer,
+    practical: practicalReducer
 });
 export default rootReducer;

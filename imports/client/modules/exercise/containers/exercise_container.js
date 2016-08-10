@@ -8,6 +8,7 @@ const mapQueriesToProps = (context, { state, ownProps }) => {
         exercise(id: $exerciseId, userId: $userId) {
           _id
           name
+          group
           instructions
           questions {
             _id

@@ -9,6 +9,7 @@ import accountsReducer from '../modules/user/actions/user_reducer';
 import solutionReducer, { ISolutionState } from '../modules/solution/actions/solution_reducer';
 import exerciseReducer, { IExerciseState } from '../modules/exercise/actions/exercise_reducer';
 import markingReducer, { IMarkingState } from '../modules/marking/actions/marking_reducer';
+import practicalReducer, { IPracticalState } from '../modules/practicals/practical_reducer';
 
 import { IState as IAccountsState } from 'meteor/tomi:accountsui-semanticui-redux';
 import { IStore as ReduxStore } from 'redux';
@@ -21,7 +22,8 @@ const rootReducer = combineReducers({
   routing: routerReducer,
   solution: solutionReducer,
   exercise: exerciseReducer ,
-  marking: markingReducer
+  marking: markingReducer,
+  practical: practicalReducer
 });
 
 export default rootReducer;
@@ -36,6 +38,7 @@ declare global {
       solution: ISolutionState;
       exercise: IExerciseState;
       marking: IMarkingState;
+      practical: IPracticalState;
     }
 
     export interface IStore extends ReduxStore<IState> {

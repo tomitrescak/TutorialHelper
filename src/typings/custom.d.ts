@@ -492,7 +492,7 @@ declare module 'apollo-mantra' {
   export function compose<T>(funcs: IConnectFunctions): (component: any) => React.StatelessComponent<T>;
   export function connect<T>(funcs: IConnectFunctions): (component: any) => React.StatelessComponent<T>;
   export function loadingContainer(component: any, keys?: string[]): any;
-  export function loggerContainer(component: any, keys?: string[]): any;
+  export function loaderContainer(component: any, mapProps?: (context: Cs.IContext, ownProps: any) => void): any;
   export function loadingContainer(component: any, loading?: any, keys?: string[]): any;
   export function copyQuery(state: Object, stateKey: string, queryResult: Object[], queryKey?: string, overwrite?: boolean): Object;
   export function isQuery(action: any, queryName: string): boolean;
@@ -585,3 +585,17 @@ declare module 'react-ace' {
 ///////////////////////////////////////////////////////////////
 
 declare var Kinetic: any;
+
+
+declare module 'react-functional' {
+  interface ILifeCycle<T> {
+    componentWillMount?(props: T): any;
+    componentDidMount?(props: T, refs: any): any;
+    componentWillReceiveProps?(props: T, nextProps: T, refs: any): any
+    shouldComponentUpdate?(props: T, nextProps: T, refs: any): any
+    componentWillUpdate?(props: T, nextProps: T, refs: any): any
+    componentDidUpdate?(props: T, prevProps: T, refs: any): any
+    componentWillUnmount?(props: T, refs: any): any
+  }
+  export default function composer<T>(component: __React.StatelessComponent<any>, lifecycle: ILifeCycle<T>): void;
+}

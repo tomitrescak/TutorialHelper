@@ -2,7 +2,8 @@ import * as React from 'react';
 import { List, ListItem, Header2, Header3, Link, Segment } from 'semanticui-react';
 let practical;
 let index;
-const PracticalListView = ({ practicals, context, semesterId }) => (<Segment>
+const PracticalListView = ({ practicals, context, semesterId }) => {
+    return (<Segment>
     <Header2 dividing text="Practicals" icon="edit"/>
     <List divided>
       <For each="practical" of={practicals} index="index">
@@ -13,4 +14,5 @@ const PracticalListView = ({ practicals, context, semesterId }) => (<Segment>
       </For>
     </List>
   </Segment>);
+};
 export default PracticalListView;

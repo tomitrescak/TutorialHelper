@@ -33,17 +33,7 @@ const SolutionView = ({ context, question, solution }) => {
         <If condition={solution.mark == null && solution.finished}>
           <Label color="grey" text="Finished"/>
         </If>
-        <Choose>
-          <When condition={solution.mark != null && solution.mark > 0 && solution.mark < question.points}>
-            <Label color="orange" text={'Satisfying Answer'}/>
-          </When>
-          <When condition={solution.mark != null && solution.mark === question.points}>
-            <Label color="green" text="Correct"/>
-          </When>
-          <When condition={solution.mark != null && solution.mark === 0}>
-            <Label color="red" text="Incorrect"/>
-          </When>
-        </Choose>
+        
         <If condition={solution.tutorComment}>
           <Message color="blue"><b>Tutor comment: </b>{solution.tutorComment}</Message>
         </If>

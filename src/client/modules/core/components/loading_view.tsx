@@ -48,6 +48,8 @@ const Loading = ({error, what }: any) => (
   </span>
 );
 
+Loading['displayName'] = 'Loading';
+
 export default Loading;
 
 

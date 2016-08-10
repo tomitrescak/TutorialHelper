@@ -2,7 +2,7 @@ import Component, { IComponentProps, IContainerProps } from '../components/marki
 import { connect, loadingContainer } from 'apollo-mantra';
 
 const mapStateToProps = (context: Cs.IContext, state: Cs.IState, ownProps: IContainerProps): IComponentProps => ({
-  stored: state.solution.solutions[ownProps.solution._id]
+  stored: state.marking.current[ownProps.solution._id]
 });
 
 export default connect<IContainerProps>({mapStateToProps})(Component);
