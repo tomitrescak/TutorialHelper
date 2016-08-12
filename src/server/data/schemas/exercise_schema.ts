@@ -327,7 +327,17 @@ const resolvers = {
       if (!user.roles || user.roles.indexOf('tutor') === -1) {
         options = { fields: { expectedAnswer: 0, validation: 0, possibilities: 0 } };
       }
-      return Questions.find({ _id: { $in: exercise.questions } }, options).fetch();
+
+      const questions = Questions.find({ _id: { $in: exercise.questions } }, options).fetch();
+      const resultQuestions: Cs.Collections.IQuestionDAO[] = [];
+
+      for (let i = 0; i < exercise.questions.length; i++) {
+        const q = questions.find(q => q._id === exercise.questions[i]);
+        console.log(exercise.questions[i]);
+        console.log("Adding: " + q.question);
+        resultQuestions.push(q);
+      }
+      return resultQuestions;
     }
   },
   Question: {
