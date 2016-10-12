@@ -21,7 +21,7 @@ const PracticalListView = ({ practicals, context, semesterId }: IComponent) => {
   <Segment>
     <Header2 dividing text="Practicals" icon="edit" />
     <List divided>
-      <For each="practical" of={practicals} index="index">
+      <For each="practical" of={practicals.sort((a,b) => a.name < b.name ? -1 : 1)} index="index">
         <ListItem key={index}>
          <Header3><Link link={`practical/${context.Utils.Router.encodeUrlName(practical.name)}/${practical._id}/${semesterId}`} text={practical.name} /></Header3>
          <p>{ practical.description }</p>

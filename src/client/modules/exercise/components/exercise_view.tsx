@@ -77,7 +77,9 @@ const ExerciseView = ({ context, user, params, userId, exerciseData,
 
 
               <For each="question" of={exercise.questions} index="index">
+                <If condition={solutions.find((s) => s.questionId === question._id)}>
                 <SolutionView key={question._id} question={question} solutionId={solutions.find((s) => s.questionId === question._id)._id} />
+                </If>
               </For>
 
             </Segment>
